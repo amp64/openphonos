@@ -1,0 +1,36 @@
+<Application xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+			 xmlns:dialogHostAvalonia="clr-namespace:DialogHostAvalonia;assembly=DialogHost.Avalonia"
+			 xmlns:ic="using:FluentIcons.Avalonia.MarkupExtensions"
+             x:Class="PhonosAvalon.App"
+             RequestedThemeVariant="Default">
+             <!-- "Default" ThemeVariant follows system theme variant. "Dark" or "Light" are other available options. -->
+
+    <Application.Styles>
+        <FluentTheme />
+		<dialogHostAvalonia:DialogHostStyles />
+
+		<Style Selector="Button.IconStyle">
+			<Setter Property="Foreground" Value="{DynamicResource ButtonForeground}"/>
+			<Setter Property="Background" Value="Transparent"/>
+		</Style>
+		<Style Selector="Button.IconStyle:disabled /template/ ContentPresenter">
+			<Setter Property="Foreground" Value="LightGray"/>
+			<Setter Property="Background" Value="Transparent"/>
+		</Style>
+		<Style Selector="ToggleButton.IconStyle">
+			<Setter Property="Foreground" Value="{DynamicResource ButtonForeground}"/>
+			<Setter Property="Background" Value="Transparent"/>
+		</Style>
+		<Style Selector="Button.BackButton">
+			<Setter Property="Content" Value="&lt;"/>
+			<Setter Property="Width" Value="42"/>
+			<Setter Property="Height" Value="42"/>
+			<Setter Property="Background" Value="Transparent"/>
+			<Setter Property="Foreground" Value="{DynamicResource ButtonForeground}"/>
+			<Setter Property="VerticalContentAlignment" Value="Center"/>
+			<Setter Property="HorizontalContentAlignment" Value="Center"/>
+		</Style>
+
+	</Application.Styles>
+</Application>

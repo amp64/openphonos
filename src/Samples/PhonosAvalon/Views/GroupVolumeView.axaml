@@ -1,0 +1,41 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+        x:Class="PhonosAvalon.Views.GroupVolumeView"
+		xmlns:vm="clr-namespace:PhonosAvalon.ViewModels"
+		xmlns:view="clr-namespace:PhonosAvalon.Views;assembly=PhonosAvalon"
+		x:DataType="vm:GroupViewModel"
+        >
+	<Grid Margin="8">
+		<Grid.RowDefinitions>
+			<RowDefinition Height="Auto"/>
+			<RowDefinition Height="0"/>
+			<RowDefinition Height="*"/>
+			<RowDefinition Height="Auto"/>
+		</Grid.RowDefinitions>
+		
+		<Button Grid.Row="0" Content="x" HorizontalAlignment="Right" VerticalAlignment="Center" Tapped="CloseButton_Clicked" Margin="0,0,0,8"/>
+		<TextBlock Grid.Row="0" Text="{Binding Summary}" HorizontalAlignment="Center" FontWeight="Bold" VerticalAlignment="Center"/>
+
+		<ListBox Grid.Row="2"
+				 ItemsSource="{Binding Players}"
+				 SelectionMode="AlwaysSelected"
+				 ScrollViewer.VerticalScrollBarVisibility="Auto"
+				 >
+			<ListBox.ItemTemplate>
+				<DataTemplate>
+					<Border BorderThickness="0" BorderBrush="White" Padding="2">
+						<view:VolumeView Title="{Binding RoomName}"/>
+					</Border>
+				</DataTemplate>
+			</ListBox.ItemTemplate>
+		</ListBox>
+
+		<Border Grid.Row="3" BorderThickness="1" BorderBrush="Gray" Padding="8,0,8,0" Margin="0,16,0,0">
+			<view:VolumeView Grid.Row="1" DataContext="{Binding GroupVolume}" Title="Group Volume" Padding="0,8,0,0"/>
+		</Border>
+
+	</Grid>
+</UserControl>

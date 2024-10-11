@@ -1,0 +1,91 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+			 xmlns:ic="using:FluentIcons.Avalonia.MarkupExtensions"
+			 xmlns:vm="clr-namespace:PhonosAvalon.ViewModels"
+			 x:DataType="vm:IVolume"
+			 x:Name="Page"
+             x:Class="PhonosAvalon.Views.VolumeView">
+
+	<!-- Ref https://docs.avaloniaui.net/docs/reference/controls/buttons/togglebutton -->	
+	<UserControl.Styles>
+		<Style Selector="ToggleButton ContentControl.audio-on">
+			<Setter Property="IsVisible" Value="False"/>
+		</Style>
+		<Style Selector="ToggleButton:checked ContentControl.audio-on">
+			<Setter Property="IsVisible" Value="True"/>
+		</Style>
+		<Style Selector="ToggleButton ContentControl.audio-mute">
+			<Setter Property="IsVisible" Value="True"/>
+		</Style>
+		<Style Selector="ToggleButton:checked ContentControl.audio-mute">
+			<Setter Property="IsVisible" Value="False"/>
+		</Style>
+	</UserControl.Styles>
+	
+	<Grid Margin="8,0,8,0"
+		  ColumnDefinitions="42,*,42">
+
+		<TextBlock
+			Grid.Column="1"
+			VerticalAlignment="Top" HorizontalAlignment="Left"
+			Text="{Binding ElementName=Page, Path=Title}"
+			IsVisible="{Binding ElementName=Page, Path=Title, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
+			/>
+
+		<ToggleButton
+			Margin="0,0,4,0"
+			IsChecked="{Binding Muted, Mode=TwoWay}"
+			Classes="IconStyle"
+			ToolTip.Tip="Mute">
+			<Panel>
+				<ContentControl Classes="audio-off">
+					<ic:SymbolIcon Symbol="Speaker1"/>
+				</ContentControl>
+				<ContentControl Classes="audio-on">
+					<ic:SymbolIcon Symbol="SpeakerMute"/>
+				</ContentControl>
+			</Panel>
+		</ToggleButton>
+
+		<Slider 
+			Grid.Column="1"
+			VerticalAlignment="Center" 
+			TickPlacement="None"
+			Value="{Binding Volume}" 
+			Maximum="100"
+			IsEnabled="{Binding !Fixed}"
+			>
+			<Slider.Resources>
+				<x:Double x:Key="SliderHorizontalThumbWidth">16</x:Double>
+				<x:Double x:Key="SliderHorizontalThumbHeight">16</x:Double>
+			</Slider.Resources>
+		</Slider>
+		<TextBlock
+			Grid.Column="1"
+			VerticalAlignment="Center"
+			HorizontalAlignment="Center"
+			Text="Fixed Volume"
+			Foreground="LightGray"
+			IsVisible="{Binding Fixed, FallbackValue=False}"
+			/>
+		<TextBlock
+			Grid.Column="2"
+			VerticalAlignment="Center"
+			HorizontalAlignment="Center"
+			Text="{Binding Volume}"
+			IsVisible="{Binding !Fixed}"
+			FontSize="10"
+			/>
+		<TextBlock
+			Grid.Column="2"
+			VerticalAlignment="Center"
+			HorizontalAlignment="Center"
+			Text="--"
+			IsVisible="{Binding Fixed}"
+			FontSize="10"
+			/>
+	</Grid>
+</UserControl>

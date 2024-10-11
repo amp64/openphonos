@@ -1,0 +1,804 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <!-- 
+    Microsoft ResX Schema 
+    
+    Version 2.0
+    
+    The primary goals of this format is to allow a simple XML format 
+    that is mostly human readable. The generation and parsing of the 
+    various data types are done through the TypeConverter classes 
+    associated with the data types.
+    
+    Example:
+    
+    ... ado.net/XML headers & schema ...
+    <resheader name="resmimetype">text/microsoft-resx</resheader>
+    <resheader name="version">2.0</resheader>
+    <resheader name="reader">System.Resources.ResXResourceReader, System.Windows.Forms, ...</resheader>
+    <resheader name="writer">System.Resources.ResXResourceWriter, System.Windows.Forms, ...</resheader>
+    <data name="Name1"><value>this is my long string</value><comment>this is a comment</comment></data>
+    <data name="Color1" type="System.Drawing.Color, System.Drawing">Blue</data>
+    <data name="Bitmap1" mimetype="application/x-microsoft.net.object.binary.base64">
+        <value>[base64 mime encoded serialized .NET Framework object]</value>
+    </data>
+    <data name="Icon1" type="System.Drawing.Icon, System.Drawing" mimetype="application/x-microsoft.net.object.bytearray.base64">
+        <value>[base64 mime encoded string representing a byte array form of the .NET Framework object]</value>
+        <comment>This is a comment</comment>
+    </data>
+                
+    There are any number of "resheader" rows that contain simple 
+    name/value pairs.
+    
+    Each data row contains a name, and value. The row also contains a 
+    type or mimetype. Type corresponds to a .NET class that support 
+    text/value conversion through the TypeConverter architecture. 
+    Classes that don't support this are serialized and stored with the 
+    mimetype set.
+    
+    The mimetype is used for serialized objects, and tells the 
+    ResXResourceReader how to depersist the object. This is currently not 
+    extensible. For a given mimetype the value must be set accordingly:
+    
+    Note - application/x-microsoft.net.object.binary.base64 is the format 
+    that the ResXResourceWriter will generate, however the reader can 
+    read any of the formats listed below.
+    
+    mimetype: application/x-microsoft.net.object.binary.base64
+    value   : The object must be serialized with 
+            : System.Runtime.Serialization.Formatters.Binary.BinaryFormatter
+            : and then encoded with base64 encoding.
+    
+    mimetype: application/x-microsoft.net.object.soap.base64
+    value   : The object must be serialized with 
+            : System.Runtime.Serialization.Formatters.Soap.SoapFormatter
+            : and then encoded with base64 encoding.
+
+    mimetype: application/x-microsoft.net.object.bytearray.base64
+    value   : The object must be serialized into a byte array 
+            : using a System.ComponentModel.TypeConverter
+            : and then encoded with base64 encoding.
+    -->
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="metadata">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" />
+              </xsd:sequence>
+              <xsd:attribute name="name" use="required" type="xsd:string" />
+              <xsd:attribute name="type" type="xsd:string" />
+              <xsd:attribute name="mimetype" type="xsd:string" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="assembly">
+            <xsd:complexType>
+              <xsd:attribute name="alias" type="xsd:string" />
+              <xsd:attribute name="name" type="xsd:string" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" msdata:Ordinal="1" />
+              <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
+              <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="AboutVersion" xml:space="preserve">
+    <value>App Version: {0}
+Sonos Version: {1}</value>
+  </data>
+  <data name="Albums" xml:space="preserve">
+    <value>Albums</value>
+  </data>
+  <data name="AllTracks" xml:space="preserve">
+    <value>All Tracks</value>
+  </data>
+  <data name="Artists" xml:space="preserve">
+    <value>Artists</value>
+  </data>
+  <data name="ChangingGroup" xml:space="preserve">
+    <value>Changing Group...</value>
+  </data>
+  <data name="Composers" xml:space="preserve">
+    <value>Composers</value>
+  </data>
+  <data name="DiagnosticsTo" xml:space="preserve">
+    <value>Diagnostics:</value>
+  </data>
+  <data name="Dialog.PrimaryButtonText" xml:space="preserve">
+    <value>Ok</value>
+  </data>
+  <data name="EditGroup.PrimaryButtonText" xml:space="preserve">
+    <value>Ok</value>
+  </data>
+  <data name="EditGroup.SecondaryButtonText" xml:space="preserve">
+    <value>Cancel</value>
+  </data>
+  <data name="EditGroup.Title" xml:space="preserve">
+    <value>Group Rooms</value>
+  </data>
+  <data name="EmailTo" xml:space="preserve">
+    <value>Email to: support@phonos.org</value>
+  </data>
+  <data name="ErrorBuffering" xml:space="preserve">
+    <value>Unable to play '{0}' - network connection speed insufficient to maintain playback buffer</value>
+  </data>
+  <data name="ErrorCantReachServer" xml:space="preserve">
+    <value>Unable to play '{0}' - unable to connect to {1}</value>
+  </data>
+  <data name="ErrorCantResolveName" xml:space="preserve">
+    <value>Unable to play '{0}' - cannot find {1}</value>
+  </data>
+  <data name="ErrorGettingItems" xml:space="preserve">
+    <value>Error getting items</value>
+  </data>
+  <data name="ErrorLostConnection" xml:space="preserve">
+    <value>Unable to play '{0}' - the connection to {1} was lost</value>
+  </data>
+  <data name="ErrorUnableToPlay" xml:space="preserve">
+    <value>Unable to play '{0}' - </value>
+  </data>
+  <data name="Firewall_Blocking" xml:space="preserve">
+    <value>Sonos players found, but a firewall is blocking network '{0}'</value>
+  </data>
+  <data name="FixedVolume.Text" xml:space="preserve">
+    <value>Fixed Volume</value>
+  </data>
+  <data name="Folders" xml:space="preserve">
+    <value>Folders</value>
+  </data>
+  <data name="FormatDolby" xml:space="preserve">
+    <value>Dolby Digital 5.1</value>
+  </data>
+  <data name="FormatNoSignal" xml:space="preserve">
+    <value>No signal</value>
+  </data>
+  <data name="FormatPauseBurst" xml:space="preserve">
+    <value>Pause Burst</value>
+  </data>
+  <data name="FormatSilence" xml:space="preserve">
+    <value>Silence</value>
+  </data>
+  <data name="FormatStereo" xml:space="preserve">
+    <value>Stereo</value>
+  </data>
+  <data name="FormatUnsupported" xml:space="preserve">
+    <value>Unsupported</value>
+  </data>
+  <data name="Format_Unknown" xml:space="preserve">
+    <value>Unknown ({0})</value>
+  </data>
+  <data name="Genres" xml:space="preserve">
+    <value>Genres</value>
+  </data>
+  <data name="GroupVolume.Text" xml:space="preserve">
+    <value>Group Volume</value>
+  </data>
+  <data name="HelpButton" xml:space="preserve">
+    <value>Help</value>
+  </data>
+  <data name="HelpTitle" xml:space="preserve">
+    <value>Help</value>
+  </data>
+  <data name="ImportedPlaylists" xml:space="preserve">
+    <value>Imported Playlists</value>
+  </data>
+  <data name="Local_Radio" xml:space="preserve">
+    <value>Local Radio ({0})</value>
+  </data>
+  <data name="MoreHelp" xml:space="preserve">
+    <value>See http://phonos.org/windows/support.html.
+For further assistance email support@phonos.org
+The clipboard has been filled with additional technical information, please include that.</value>
+  </data>
+  <data name="MusicAbout" xml:space="preserve">
+    <value>About</value>
+  </data>
+  <data name="MusicEmailUs" xml:space="preserve">
+    <value>Email us</value>
+  </data>
+  <data name="MusicFacebookPage" xml:space="preserve">
+    <value>Facebook page</value>
+  </data>
+  <data name="MusicHelpEmail" xml:space="preserve">
+    <value>Help via Email</value>
+  </data>
+  <data name="MusicLibraryTitle" xml:space="preserve">
+    <value>Music Library</value>
+  </data>
+  <data name="MusicLineIn" xml:space="preserve">
+    <value>Line-In</value>
+  </data>
+  <data name="MusicMusicLibrary" xml:space="preserve">
+    <value>Music Library</value>
+  </data>
+  <data name="MusicMusicSource" xml:space="preserve">
+    <value>Music Source</value>
+  </data>
+  <data name="MusicNoItemsFound" xml:space="preserve">
+    <value>No items found</value>
+  </data>
+  <data name="MusicReview" xml:space="preserve">
+    <value>Review</value>
+  </data>
+  <data name="MusicSettings" xml:space="preserve">
+    <value>Settings</value>
+  </data>
+  <data name="MusicSonosFavorites" xml:space="preserve">
+    <value>Sonos Favorites</value>
+  </data>
+  <data name="MusicSonosPlaylists" xml:space="preserve">
+    <value>Sonos Playlists</value>
+  </data>
+  <data name="MusicStarting" xml:space="preserve">
+    <value>Starting...</value>
+  </data>
+  <data name="MusicThemeOption" xml:space="preserve">
+    <value>Light/Dark Theme</value>
+  </data>
+  <data name="MusicTV" xml:space="preserve">
+    <value>TV</value>
+  </data>
+  <data name="MyRadioShows" xml:space="preserve">
+    <value>My Radio Shows</value>
+  </data>
+  <data name="MyRadioStations" xml:space="preserve">
+    <value>My Radio Stations</value>
+  </data>
+  <data name="NetworkProblemUnknown" xml:space="preserve">
+    <value>Unknown reason</value>
+  </data>
+  <data name="Network_ContainsNoPlayers" xml:space="preserve">
+    <value>Network '{0}' contains no players</value>
+  </data>
+  <data name="Network_NotCompatible" xml:space="preserve">
+    <value>Sonos players found, but the network '{0}' may not compatible with this application</value>
+  </data>
+  <data name="Network_NotPrivate" xml:space="preserve">
+    <value>Sonos players found, but the network '{0}' is not Private, please change it</value>
+  </data>
+  <data name="NoMusic" xml:space="preserve">
+    <value>[No music]</value>
+  </data>
+  <data name="NoPlayersFound" xml:space="preserve">
+    <value>No Sonos players found</value>
+  </data>
+  <data name="NoSuitableNetworksFound" xml:space="preserve">
+    <value>No suitable networks found</value>
+  </data>
+  <data name="NotConnectedToWiFi" xml:space="preserve">
+    <value>Not connected to Wi-Fi</value>
+  </data>
+  <data name="NotProperlyConnectedTo_Network" xml:space="preserve">
+    <value>Not properly connected to network '{0}'</value>
+  </data>
+  <data name="NPAlbum" xml:space="preserve">
+    <value>Album</value>
+  </data>
+  <data name="NPArtist" xml:space="preserve">
+    <value>Artist</value>
+  </data>
+  <data name="NPAudioIn" xml:space="preserve">
+    <value>Audio In</value>
+  </data>
+  <data name="NPChannel" xml:space="preserve">
+    <value>Channel</value>
+  </data>
+  <data name="NPInformation" xml:space="preserve">
+    <value>Information</value>
+  </data>
+  <data name="NPNext" xml:space="preserve">
+    <value>Next</value>
+  </data>
+  <data name="NPNothing" xml:space="preserve">
+    <value>nothing</value>
+  </data>
+  <data name="NPOnNow" xml:space="preserve">
+    <value>On Now</value>
+  </data>
+  <data name="NPRoom" xml:space="preserve">
+    <value>Room</value>
+  </data>
+  <data name="NPSource" xml:space="preserve">
+    <value>Source</value>
+  </data>
+  <data name="NPStation" xml:space="preserve">
+    <value>Station</value>
+  </data>
+  <data name="NPTrack" xml:space="preserve">
+    <value>Track</value>
+  </data>
+  <data name="NPTV" xml:space="preserve">
+    <value>TV</value>
+  </data>
+  <data name="NP_Track_Counter" xml:space="preserve">
+    <value>Track [{0}/{1}]</value>
+  </data>
+  <data name="OkButton" xml:space="preserve">
+    <value>Ok</value>
+  </data>
+  <data name="Or_Firewall" xml:space="preserve">
+    <value>, or a firewall is blocking incoming TCP port {0}</value>
+  </data>
+  <data name="Playback_Problem" xml:space="preserve">
+    <value>Sorry, there was a problem playing that:
+</value>
+  </data>
+  <data name="PlayerStartingUp" xml:space="preserve">
+    <value>[Starting up]</value>
+  </data>
+  <data name="PopupAddQueue" xml:space="preserve">
+    <value>Add to Queue</value>
+  </data>
+  <data name="PopupPlayNext" xml:space="preserve">
+    <value>Play Next</value>
+  </data>
+  <data name="PopupPlayNow" xml:space="preserve">
+    <value>Play Now</value>
+  </data>
+  <data name="PopupReplaceQueue" xml:space="preserve">
+    <value>Replace Queue</value>
+  </data>
+  <data name="QuitButton" xml:space="preserve">
+    <value>Quit</value>
+  </data>
+  <data name="Radio" xml:space="preserve">
+    <value>Radio</value>
+  </data>
+  <data name="RadioTitle" xml:space="preserve">
+    <value>Radio by TuneIn</value>
+  </data>
+  <data name="RetryButton" xml:space="preserve">
+    <value>Retry</value>
+  </data>
+  <data name="Rooms.Text" xml:space="preserve">
+    <value>Rooms</value>
+  </data>
+  <data name="Searching" xml:space="preserve">
+    <value>Searching...</value>
+  </data>
+  <data name="SearchingNetwork" xml:space="preserve">
+    <value>Searching for your Sonos system...</value>
+  </data>
+  <data name="Search_Prompt" xml:space="preserve">
+    <value>Search {0}</value>
+  </data>
+  <data name="SorryMoreThan_One" xml:space="preserve">
+    <value>Sorry, more than one item called {0} was found</value>
+  </data>
+  <data name="SorryNoGroup" xml:space="preserve">
+    <value>Sorry, I could not find that group</value>
+  </data>
+  <data name="Sorry_NotPlayable" xml:space="preserve">
+    <value>Sorry, {0} is not playable</value>
+  </data>
+  <data name="StreamConnecting" xml:space="preserve">
+    <value>Connecting...</value>
+  </data>
+  <data name="StreamStarting" xml:space="preserve">
+    <value>Starting...</value>
+  </data>
+  <data name="Tracks" xml:space="preserve">
+    <value>Tracks</value>
+  </data>
+  <data name="Version_Title" xml:space="preserve">
+    <value>Version {0}</value>
+  </data>
+  <data name="MoreButton.Label" xml:space="preserve">
+    <value>More</value>
+  </data>
+  <data name="NextButton.Label" xml:space="preserve">
+    <value>Next</value>
+  </data>
+  <data name="PauseButton.Label" xml:space="preserve">
+    <value>Pause</value>
+  </data>
+  <data name="PlayButton.Label" xml:space="preserve">
+    <value>Play</value>
+  </data>
+  <data name="PreviousButton.Label" xml:space="preserve">
+    <value>Previous</value>
+  </data>
+  <data name="VolumeButton.Label" xml:space="preserve">
+    <value>Volume</value>
+  </data>
+  <data name="AppExpired" xml:space="preserve">
+    <value>This Preview has expired. Thank you everyone for your feedback, you can now get the full version of Phonos Universal from the Store</value>
+  </data>
+  <data name="EmailNoReply" xml:space="preserve">
+    <value>(We will not reply to this email unless you ask us to).</value>
+  </data>
+  <data name="InternalNetworkFailure" xml:space="preserve">
+    <value>Internal failure in network API</value>
+  </data>
+  <data name="MusicServiceLanguage" xml:space="preserve">
+    <value>en-US</value>
+    <comment>DO NOT EDIT</comment>
+  </data>
+  <data name="NeedReath" xml:space="preserve">
+    <value>Your login information is not valid, check using an official Sonos app</value>
+  </data>
+  <data name="N_Tracks" xml:space="preserve">
+    <value>{0} tracks</value>
+  </data>
+  <data name="PandoraBadCredentials" xml:space="preserve">
+    <value>Invalid username or password</value>
+  </data>
+  <data name="PandoraMore" xml:space="preserve">
+    <value>Pandora will play more tracks with similar musical qualities</value>
+  </data>
+  <data name="PandoraNoMore" xml:space="preserve">
+    <value>This track won't play again on this station</value>
+  </data>
+  <data name="PleasePaste" xml:space="preserve">
+    <value>Please PASTE here before sending</value>
+  </data>
+  <data name="Queue.Header" xml:space="preserve">
+    <value>Queue</value>
+  </data>
+  <data name="QueueClearSure" xml:space="preserve">
+    <value>Are you sure you want to clear the queue?</value>
+  </data>
+  <data name="QueueError" xml:space="preserve">
+    <value>Queue Error</value>
+  </data>
+  <data name="QueueNotInUse" xml:space="preserve">
+    <value>(not in use)</value>
+  </data>
+  <data name="QueueTitle" xml:space="preserve">
+    <value>Queue</value>
+  </data>
+  <data name="Reauth_Official" xml:space="preserve">
+    <value>Your {0} account needs to be reauthorized using an official Sonos app</value>
+  </data>
+  <data name="Sleep120" xml:space="preserve">
+    <value>2 hours</value>
+  </data>
+  <data name="Sleep15" xml:space="preserve">
+    <value>15 minutes</value>
+  </data>
+  <data name="Sleep30" xml:space="preserve">
+    <value>30 minutes</value>
+  </data>
+  <data name="Sleep45" xml:space="preserve">
+    <value>45 minutes</value>
+  </data>
+  <data name="Sleep60" xml:space="preserve">
+    <value>1 hour</value>
+  </data>
+  <data name="SleepOff" xml:space="preserve">
+    <value>Off</value>
+  </data>
+  <data name="SorryCrashed" xml:space="preserve">
+    <value>Sorry, Phonos crashed last time you ran it, will now send email so we can try and fix it</value>
+  </data>
+  <data name="SorryDave" xml:space="preserve">
+    <value>Sorry Dave, I can't do that</value>
+  </data>
+  <data name="Sorry_NoFind" xml:space="preserve">
+    <value>Sorry, I cannot find {0}</value>
+  </data>
+  <data name="Sorry_NoPlayer" xml:space="preserve">
+    <value>Sorry, I cannot find a player called {0}</value>
+  </data>
+  <data name="Sorry_VolumeFixed" xml:space="preserve">
+    <value>Sorry, the volume is fixed in the {0}</value>
+  </data>
+  <data name="UPNP_Error" xml:space="preserve">
+    <value>UPnP Error {0}</value>
+  </data>
+  <data name="SleepTimerOff" xml:space="preserve">
+    <value>Off</value>
+  </data>
+  <data name="Sleep_Timer" xml:space="preserve">
+    <value>Sleep Timer ({0})</value>
+  </data>
+  <data name="AboutButton.Label" xml:space="preserve">
+    <value>About</value>
+  </data>
+  <data name="CrossfadeOff" xml:space="preserve">
+    <value>Crossfade is off</value>
+  </data>
+  <data name="CrossfadeOn" xml:space="preserve">
+    <value>Crossfade is on</value>
+  </data>
+  <data name="DislikeButton.Label" xml:space="preserve">
+    <value>Dislike</value>
+  </data>
+  <data name="LikeButton.Label" xml:space="preserve">
+    <value>Like</value>
+  </data>
+  <data name="RepeatOff" xml:space="preserve">
+    <value>Repeat is off</value>
+  </data>
+  <data name="RepeatOn" xml:space="preserve">
+    <value>Repeat all</value>
+  </data>
+  <data name="RepeatOne" xml:space="preserve">
+    <value>Repeat song</value>
+  </data>
+  <data name="ShuffleOff" xml:space="preserve">
+    <value>Shuffle is off</value>
+  </data>
+  <data name="ShuffleOn" xml:space="preserve">
+    <value>Shuffle is on</value>
+  </data>
+  <data name="FormatDolby2" xml:space="preserve">
+    <value>Dolby Digital 2.0</value>
+  </data>
+  <data name="NightModeOff" xml:space="preserve">
+    <value>Night Sound is Off</value>
+  </data>
+  <data name="NightModeOn" xml:space="preserve">
+    <value>Night Sound is On</value>
+  </data>
+  <data name="SpeechEnhancementOff" xml:space="preserve">
+    <value>Speech Enhancement is Off</value>
+  </data>
+  <data name="SpeechEnhancementOn" xml:space="preserve">
+    <value>Speech Enhancement is On</value>
+  </data>
+  <data name="QueueAll.Text" xml:space="preserve">
+    <value>All</value>
+  </data>
+  <data name="QueueClearNo" xml:space="preserve">
+    <value>No</value>
+  </data>
+  <data name="QueueClearYes" xml:space="preserve">
+    <value>Yes</value>
+  </data>
+  <data name="VPNBlocking" xml:space="preserve">
+    <value>A VPN seems to be blocking access to the local network</value>
+  </data>
+  <data name="AlarmEditAlarm.Text" xml:space="preserve">
+    <value>Alarm</value>
+  </data>
+  <data name="AlarmEditDialog.PrimaryButtonText" xml:space="preserve">
+    <value>Ok</value>
+  </data>
+  <data name="AlarmEditDialog.SecondaryButtonText" xml:space="preserve">
+    <value>Cancel</value>
+  </data>
+  <data name="AlarmEditDuration.Text" xml:space="preserve">
+    <value>Duration</value>
+  </data>
+  <data name="AlarmEditDuration120.Content" xml:space="preserve">
+    <value>2 hours</value>
+  </data>
+  <data name="AlarmEditDuration15.Content" xml:space="preserve">
+    <value>15 minutes</value>
+  </data>
+  <data name="AlarmEditDuration30.Content" xml:space="preserve">
+    <value>30 minutes</value>
+  </data>
+  <data name="AlarmEditDuration45.Content" xml:space="preserve">
+    <value>45 minutes</value>
+  </data>
+  <data name="AlarmEditDuration60.Content" xml:space="preserve">
+    <value>1 hour</value>
+  </data>
+  <data name="AlarmEditDurationNone.Content" xml:space="preserve">
+    <value>No limit</value>
+  </data>
+  <data name="AlarmEditGrouped.Content" xml:space="preserve">
+    <value>Include grouped rooms</value>
+  </data>
+  <data name="AlarmEditMusic.Text" xml:space="preserve">
+    <value>Music</value>
+  </data>
+  <data name="AlarmEditRoom.Text" xml:space="preserve">
+    <value>Room</value>
+  </data>
+  <data name="AlarmEditSchedule.Text" xml:space="preserve">
+    <value>Schedule</value>
+  </data>
+  <data name="AlarmEditTime.Text" xml:space="preserve">
+    <value>Time</value>
+  </data>
+  <data name="AlarmEditVolume.Text" xml:space="preserve">
+    <value>Volume</value>
+  </data>
+  <data name="AlarmListDialog.PrimaryButtonText" xml:space="preserve">
+    <value>Done</value>
+  </data>
+  <data name="AlarmListDialog.SecondaryButtonText" xml:space="preserve">
+    <value>Add Alarm</value>
+  </data>
+  <data name="AlarmListDialog.Title" xml:space="preserve">
+    <value>Alarms</value>
+  </data>
+  <data name="AlarmsMenuItem" xml:space="preserve">
+    <value>Alarms</value>
+  </data>
+  <data name="AlarmSummaryDaily" xml:space="preserve">
+    <value>Daily</value>
+  </data>
+  <data name="AlarmSummaryOnce" xml:space="preserve">
+    <value>Once</value>
+  </data>
+  <data name="AlarmTitleAdd" xml:space="preserve">
+    <value>Add Alarm</value>
+  </data>
+  <data name="AlarmTitleEdit" xml:space="preserve">
+    <value>Edit Alarm</value>
+  </data>
+  <data name="SonosChime" xml:space="preserve">
+    <value>Sonos Chime</value>
+  </data>
+  <data name="AlarmEditOnceOnly.Content" xml:space="preserve">
+    <value>Once Only</value>
+  </data>
+  <data name="PopupDelete" xml:space="preserve">
+    <value>Delete</value>
+  </data>
+  <data name="SaveQueue.PlaceholderText" xml:space="preserve">
+    <value>Playlist name to save as</value>
+  </data>
+  <data name="SaveQueueDialog.PrimaryButtonText" xml:space="preserve">
+    <value>Save</value>
+  </data>
+  <data name="SaveQueueDialog.SecondaryButtonText" xml:space="preserve">
+    <value>Cancel</value>
+  </data>
+  <data name="SaveQueueDialog.Title" xml:space="preserve">
+    <value>Save Queue</value>
+  </data>
+  <data name="RoomSelectAll.Content" xml:space="preserve">
+    <value>Select all</value>
+  </data>
+  <data name="Balance.Text" xml:space="preserve">
+    <value>Balance</value>
+  </data>
+  <data name="BalanceL.Text" xml:space="preserve">
+    <value>L</value>
+  </data>
+  <data name="BalanceR.Text" xml:space="preserve">
+    <value>R</value>
+  </data>
+  <data name="Bass.Text" xml:space="preserve">
+    <value>Bass</value>
+  </data>
+  <data name="DeviceEQDialog.PrimaryButtonText" xml:space="preserve">
+    <value>Done</value>
+    <comment>Same as Alarm Done</comment>
+  </data>
+  <data name="EQReset.Content" xml:space="preserve">
+    <value>Reset</value>
+  </data>
+  <data name="Loudness.Text" xml:space="preserve">
+    <value>Loudness</value>
+  </data>
+  <data name="SonosSystemUpdate" xml:space="preserve">
+    <value>Sonos system update version {0} is available from Sonos, you can use their official app to update your system.</value>
+  </data>
+  <data name="Treble.Text" xml:space="preserve">
+    <value>Treble</value>
+  </data>
+  <data name="DeleteTrackHowTo" xml:space="preserve">
+    <value>To remove a song from the queue, drag it over this icon.</value>
+  </data>
+  <data name="RemoveSong" xml:space="preserve">
+    <value>Remove song</value>
+  </data>
+  <data name="Indexing_Problem" xml:space="preserve">
+    <value>Problem indexing music library {0}</value>
+  </data>
+  <data name="MusicUpdateLibrary" xml:space="preserve">
+    <value>Update Music Library Now</value>
+  </data>
+  <data name="StartingUpdate" xml:space="preserve">
+    <value>Starting update...</value>
+  </data>
+  <data name="WheelVolume" xml:space="preserve">
+    <value>Volume</value>
+  </data>
+  <data name="SearchHosts" xml:space="preserve">
+    <value>Hosts</value>
+  </data>
+  <data name="SearchPeople" xml:space="preserve">
+    <value>People</value>
+  </data>
+  <data name="SearchPlaylists" xml:space="preserve">
+    <value>Playlists</value>
+  </data>
+  <data name="SearchPodcasts" xml:space="preserve">
+    <value>Podcasts</value>
+  </data>
+  <data name="SearchStations" xml:space="preserve">
+    <value>Stations</value>
+  </data>
+  <data name="SearchTags" xml:space="preserve">
+    <value>Tags</value>
+  </data>
+  <data name="AddingFavorite" xml:space="preserve">
+    <value>Adding Sonos Favorite...</value>
+  </data>
+  <data name="FavoritesFull" xml:space="preserve">
+    <value>Unable to add Favorite. There are no empty favorites remaining. You can remove existing Sonos Favorites to make room for new ones.</value>
+  </data>
+  <data name="FromMusicLibrary" xml:space="preserve">
+    <value>From Music Library</value>
+  </data>
+  <data name="PopupFavorite" xml:space="preserve">
+    <value>Add to Sonos Favorites</value>
+  </data>
+  <data name="TypeComposer" xml:space="preserve">
+    <value>Composer</value>
+  </data>
+  <data name="TypeGenre" xml:space="preserve">
+    <value>Genre</value>
+  </data>
+  <data name="TypePlaylist" xml:space="preserve">
+    <value>Playlist</value>
+  </data>
+  <data name="AlarmMusic" xml:space="preserve">
+    <value>Alarm Music</value>
+  </data>
+  <data name="MusicPickerDialog.PrimaryButtonText" xml:space="preserve">
+    <value>Set Alarm Music</value>
+  </data>
+  <data name="MusicPickerDialog.SecondaryButtonText" xml:space="preserve">
+    <value>Cancel</value>
+  </data>
+  <data name="AlarmEditDuration180.Content" xml:space="preserve">
+    <value>3 hours</value>
+  </data>
+  <data name="Snooze10.Text" xml:space="preserve">
+    <value>10 minutes</value>
+  </data>
+  <data name="Snooze120.Text" xml:space="preserve">
+    <value>2 hours</value>
+  </data>
+  <data name="Snooze15.Text" xml:space="preserve">
+    <value>15 minutes</value>
+  </data>
+  <data name="Snooze30.Text" xml:space="preserve">
+    <value>30 minutes</value>
+  </data>
+  <data name="Snooze45.Text" xml:space="preserve">
+    <value>45 minutes</value>
+  </data>
+  <data name="Snooze5.Text" xml:space="preserve">
+    <value>5 minutes</value>
+  </data>
+  <data name="Snooze60.Text" xml:space="preserve">
+    <value>1 hour</value>
+  </data>
+  <data name="SnoozeTitle.Text" xml:space="preserve">
+    <value>Snooze for:</value>
+  </data>
+</root>

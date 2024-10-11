@@ -1,0 +1,74 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+			 xmlns:ic="using:FluentIcons.Avalonia.MarkupExtensions"
+             xmlns:asyncImageLoader="clr-namespace:AsyncImageLoader;assembly=AsyncImageLoader.Avalonia"
+			 xmlns:OpenPhonos="clr-namespace:OpenPhonos.Sonos;assembly=OpenPhonos.Sonos"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+			 xmlns:vm="clr-namespace:PhonosAvalon.ViewModels"
+			 x:DataType="vm:GroupViewModel"
+			 x:CompileBindings="True"
+             x:Class="PhonosAvalon.Views.QueueView">
+	<UserControl.Resources>
+		<DataTemplate x:Key="MusicItemListTemplate" DataType="{x:Type OpenPhonos:QueueMusicItem}">
+			<Grid>
+				<Grid.ColumnDefinitions>
+					<ColumnDefinition Width="32"/>
+					<ColumnDefinition Width="*"/>
+					<ColumnDefinition Width="32"/>
+				</Grid.ColumnDefinitions>
+				<Grid.RowDefinitions>
+					<RowDefinition Height="32"/>
+				</Grid.RowDefinitions>
+
+				<StackPanel Orientation="Vertical" Grid.Column="1" Margin="4,0,0,0" VerticalAlignment="Center">
+					<TextBlock Text="{Binding Title}" HorizontalAlignment="Left"/>
+					<TextBlock Text="{Binding Subtitle}" HorizontalAlignment="Left" IsVisible="{Binding Subtitle, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
+					</StackPanel>
+				<Grid Grid.RowSpan="1" Grid.Column="2" HorizontalAlignment="Center" VerticalAlignment="Center" >
+					<Button Content="{ic:SymbolIcon Symbol=Play}"
+							Classes="IconStyle" Width="34"
+							Command="{Binding $parent[ListBox].((vm:GroupViewModel)DataContext).Queue.PlayPauseCommand}"
+							CommandParameter="{Binding}"
+							IsVisible="{Binding PlayVisible}"/>
+					<Button Content="{ic:SymbolIcon Symbol=Pause}" 
+							Classes="IconStyle" Width="34"
+							Command="{Binding $parent[ListBox].((vm:GroupViewModel)DataContext).Queue.PlayPauseCommand}"
+							CommandParameter="{Binding}"
+							IsVisible="{Binding PauseVisible}"/>
+				</Grid>
+				<Image Grid.Column="0" Grid.RowSpan="2" Margin="2"
+					   asyncImageLoader:ImageLoader.Source="{Binding ArtUriAsync^}"
+					   Stretch="UniformToFill"
+							/>
+			</Grid>
+		</DataTemplate>
+	</UserControl.Resources>
+
+	<Design.DataContext>
+		<vm:FakeGroupViewModel />
+	</Design.DataContext>
+
+	<Grid >
+		<Grid.RowDefinitions>
+			<RowDefinition Height="32"/>
+			<RowDefinition Height="*"/>
+		</Grid.RowDefinitions>
+		<StackPanel Orientation="Horizontal">
+			<Button Classes="BackButton" Tapped="BackButton_Tapped"/>
+			<TextBlock VerticalAlignment="Center">
+				<Run Text="{Binding Queue.Heading}"/>
+				<Run Text="{Binding Summary}" FontWeight="Bold"/>
+				<Run Text="{Binding Queue.QueueSize, StringFormat={}{0} songs}"/>
+			</TextBlock>
+		</StackPanel>
+		<ListBox x:Name="QueueListBox" Grid.Row="1"
+				 ItemsSource="{Binding Queue.Items}"
+				 HorizontalAlignment="Stretch" VerticalAlignment="Stretch"
+				 SelectionChanged="Listbox_SelectionChanged"
+				 SelectionMode="Single"
+				 ItemTemplate="{StaticResource MusicItemListTemplate}">
+		</ListBox>
+	</Grid>
+</UserControl>

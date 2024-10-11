@@ -1,0 +1,44 @@
+using AsyncImageLoader;
+using AsyncImageLoader.Loaders;
+using Avalonia.Controls;
+using Avalonia.Controls.ApplicationLifetimes;
+using Avalonia.Logging;
+using Avalonia.Input;
+using Avalonia.VisualTree;
+using PhonosAvalon.ViewModels;
+using System;
+using System.Collections.Generic;
+using Avalonia.Interactivity;
+using DialogHostAvalonia.Positioners;
+using Avalonia;
+
+namespace PhonosAvalon.Views;
+
+public partial class MobileMainView : UserControl
+{
+    private ParametrizedLogger? _Logger;
+
+    public MobileMainView()
+    {
+        ImageLoader.AsyncImageLoader.Dispose();
+
+        // Must set a cache path on iOS as CWD is read-only
+        string path = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
+        path = System.IO.Path.Combine(path, "Cache", "Images");
+        ImageLoader.AsyncImageLoader = new DiskCachedWebImageLoader(path);
+
+        InitializeComponent();
+
+        DialogHost.PopupPositioner = new DialogPopupPositioner();
+    }
+
+    private class DialogPopupPositioner : IDialogPopupPositioner
+    {
+        public Rect Update(Size anchorRectangle, Size size)
+        {
+            double margin = 12;
+            Rect posn = new Rect(0, 0, anchorRectangle.Width, anchorRectangle.Height);
+            return posn.Inflate(-margin);
+        }
+    }
+}

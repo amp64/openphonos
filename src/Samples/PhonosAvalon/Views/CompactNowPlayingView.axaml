@@ -1,0 +1,49 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+             xmlns:vm="clr-namespace:PhonosAvalon.ViewModels"
+			 x:DataType="vm:GroupViewModel"
+             x:Class="PhonosAvalon.Views.CompactNowPlayingView">
+
+	<Design.DataContext>
+		<vm:FakeGroupViewModel/>
+	</Design.DataContext>
+
+	<UserControl.Styles>
+		<Style Selector="TextBlock.NPTitle">
+			<Setter Property="FontSize" Value="8"/>
+			<Setter Property="TextWrapping" Value="Wrap"/>
+			<Setter Property="MaxLines" Value="2"/>
+		</Style>
+		<Style Selector="TextBlock.NPItem">
+			<Setter Property="FontSize" Value="14"/>
+			<Setter Property="Margin" Value="0,0,0,8"/>
+			<Setter Property="TextWrapping" Value="Wrap"/>
+			<Setter Property="MaxLines" Value="2"/>
+		</Style>
+		<Style Selector="Run.NPItemE">
+			<Setter Property="FontSize" Value="10"/>
+			<Setter Property="Background" Value="Black"/>
+			<Setter Property="Foreground" Value="White"/>
+		</Style>
+	</UserControl.Styles>
+
+	<StackPanel Orientation="Vertical" HorizontalAlignment="Left">
+		<TextBlock Text="{Binding NowPlaying.TrackDescription}" Classes="NPTitle" IsVisible="False"/>
+		<TextBlock Classes="NPItem">
+			<Run Text="{Binding NowPlaying.TrackTitle}"/>
+			<Run Text="{Binding NowPlaying.ExplicitText}" Classes="NPItemE"/>
+		</TextBlock>
+		<TextBlock Text="{Binding NowPlaying.ArtistDescription}" Classes="NPTitle" IsVisible="False"/>
+		<TextBlock Text="{Binding NowPlaying.Artist}" Classes="NPItem"/>
+		<TextBlock Text="{Binding NowPlaying.AlbumDescription}" Classes="NPTitle" IsVisible="False"/>
+		<TextBlock Text="{Binding NowPlaying.Album}" Classes="NPItem"/>
+		<TextBlock Classes="NPTitle">
+			<Run Text="{Binding NowPlaying.InfoDescription}"/>
+			<Run Text="{Binding NowPlaying.Info}"/>
+		</TextBlock>
+	</StackPanel>
+
+</UserControl>

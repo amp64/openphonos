@@ -1,0 +1,40 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+    <AssemblyName>OpenPhonos.UPnP</AssemblyName>
+    <RootNamespace>OpenPhonos.UPnP</RootNamespace>
+    <ApplicationIcon />
+    <Win32Resource />
+    <Company>ControlAV</Company>
+    <Authors>controlav</Authors>
+    <Description>UPnP library for .NET Standard</Description>
+    <Copyright>OpenPhonos 2024</Copyright>
+    <AssemblyVersion>1.0.0.0</AssemblyVersion>
+    <FileVersion>1.0.0.0</FileVersion>
+    <Version>0.1.0-alpha</Version>
+    <PackageId>OpenPhonos.UPnP</PackageId>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <Configurations>Debug;Release;Store Release</Configurations>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="8.0.1" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Update="UPnP.Designer.cs">
+      <DesignTime>True</DesignTime>
+      <AutoGen>True</AutoGen>
+      <DependentUpon>UPnP.resx</DependentUpon>
+    </Compile>
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Update="UPnP.resx">
+      <Generator>ResXFileCodeGenerator</Generator>
+      <LastGenOutput>UPnP.Designer.cs</LastGenOutput>
+    </EmbeddedResource>
+  </ItemGroup>
+
+</Project>

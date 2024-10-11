@@ -1,0 +1,84 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+		     xmlns:vm="clr-namespace:PhonosAvalon.ViewModels"
+			 xmlns:ic="using:FluentIcons.Avalonia.MarkupExtensions"
+			 xmlns:views="clr-namespace:PhonosAvalon.Views;assembly=PhonosAvalon"
+             xmlns:asyncImageLoader="clr-namespace:AsyncImageLoader;assembly=AsyncImageLoader.Avalonia"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+			 x:DataType="vm:NowPlayingViewModel"
+             x:Class="PhonosAvalon.Views.TransportControlView">
+
+	<UserControl.Resources>
+		<vm:PlayStateToLabelConverter x:Key="PlayStateToLabelConverter"/>
+		<views:PlayStateToSymbolIconConverter x:Key="PlayStateToSymbolIconConverter"/>
+		<x:Double x:Key="ButtonSize">42</x:Double>
+		<!-- As we use pcdcr icons, we need a dark-ish background for Ratings -->
+		<Color x:Key="RatingBackground">Gray</Color>
+	</UserControl.Resources>
+
+	<UserControl.Styles>
+		<Style Selector="Button">
+			<Setter Property="Width" Value="{StaticResource ButtonSize}"/>
+			<Setter Property="Height" Value="{StaticResource ButtonSize}"/>
+		</Style>
+	</UserControl.Styles>
+
+	<Grid ColumnDefinitions="42,42,42,42,42" 
+		  HorizontalAlignment="Center" VerticalAlignment="Bottom">
+		
+		<Button x:DataType="vm:RatingsViewModel"
+				Grid.Column="0"
+				DataContext="{Binding TrackRatings[0]}"
+				Command="{Binding SetRatingsCommand}"
+				Classes="IconStyle"
+				IsVisible="{Binding Enabled}"
+				Background="{StaticResource RatingBackground}"
+				ToolTip.Tip="{Binding BeforeMessage}">
+			<Panel>
+				<Image asyncImageLoader:ImageLoader.Source="{Binding Image}"
+					   Width="{StaticResource ButtonSize}" Height="{StaticResource ButtonSize}" Margin="-12"/>
+			</Panel>
+			<Button.Flyout>
+				<Flyout ShowMode="TransientWithDismissOnPointerMoveAway">
+					<TextBlock Text="{Binding AfterMessage}"/>
+				</Flyout>
+			</Button.Flyout>
+		</Button>
+
+		<Button Grid.Column="1" 
+				Content="{ic:SymbolIcon Symbol=Previous}"
+				Classes="IconStyle"
+				Command="{Binding PreviousCommand}"
+				IsEnabled="{Binding CanPrevious}"/>
+		<Button Grid.Column="2"
+				Content="{Binding PlayState, Converter={StaticResource PlayStateToSymbolIconConverter}}"
+				Classes="IconStyle"
+				Command="{Binding PlayPauseCommand}"/>
+		<Button Grid.Column="3"
+				Content="{ic:SymbolIcon Symbol=Next}"
+				Classes="IconStyle"
+				Command="{Binding NextCommand}"
+				IsEnabled="{Binding CanNext}"
+				/>
+		<Button x:DataType="vm:RatingsViewModel"
+				Grid.Column="4"
+				DataContext="{Binding TrackRatings[1]}"
+				Classes="IconStyle"
+				Command="{Binding SetRatingsCommand}"
+				IsVisible="{Binding Enabled}"
+				Background="{StaticResource RatingBackground}"
+				ToolTip.Tip="{Binding BeforeMessage}">
+			<Panel>
+				<Image asyncImageLoader:ImageLoader.Source="{Binding Image}"
+					   Width="{StaticResource ButtonSize}" Height="{StaticResource ButtonSize}" Margin="-12"/>
+			</Panel>
+			<Button.Flyout>
+				<Flyout ShowMode="TransientWithDismissOnPointerMoveAway">
+					<TextBlock Text="{Binding AfterMessage}"/>
+				</Flyout>
+			</Button.Flyout>
+		</Button>
+	</Grid>
+</UserControl>

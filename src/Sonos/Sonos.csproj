@@ -1,0 +1,25 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+    <AssemblyName>OpenPhonos.Sonos</AssemblyName>
+    <PackageId>OpenPhonos.Sonos</PackageId>
+    <Version>0.1.0.0-alpha</Version>
+    <Authors>OpenPHonos</Authors>
+    <Company>OpenPhonos</Company>
+    <Description>Library to access Sonos players</Description>
+    <Copyright>OpenPhonos 2024</Copyright>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <RootNamespace>OpenPhonos.Sonos</RootNamespace>
+    <Configurations>Debug;Release;Store Release</Configurations>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="System.Text.Json" Version="8.0.4" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\UPnP\UPnP.csproj" />
+  </ItemGroup>
+
+</Project>

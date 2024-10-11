@@ -1,0 +1,131 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:asyncImageLoader="clr-namespace:AsyncImageLoader;assembly=AsyncImageLoader.Avalonia"
+			 xmlns:ic="using:FluentIcons.Avalonia.MarkupExtensions"
+             xmlns:vm="clr-namespace:PhonosAvalon.ViewModels"
+			 xmlns:dialogHostAvalonia="clr-namespace:DialogHostAvalonia;assembly=DialogHost.Avalonia"
+			 xmlns:views="clr-namespace:PhonosAvalon.Views;assembly=PhonosAvalon"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+             x:Class="PhonosAvalon.Views.MainView"
+             x:DataType="vm:MainViewModel"
+			 x:CompileBindings="True">
+	<Design.DataContext>
+		<vm:FakeMainViewModel />
+	</Design.DataContext>
+
+	<dialogHostAvalonia:DialogHost x:Name="DialogHost">
+		<dialogHostAvalonia:DialogHost.IsOpen>
+			<MultiBinding Converter="{x:Static BoolConverters.Or}">
+				<Binding Path="VolumePopupOpen"/>
+				<Binding Path="GroupEditorOpen"/>
+				<Binding Path="QueuePopupOpen"/>
+			</MultiBinding>
+		</dialogHostAvalonia:DialogHost.IsOpen>
+		<dialogHostAvalonia:DialogHost.DialogContent>
+			<Grid Width="500">
+				<views:GroupVolumeView DataContext="{Binding CurrentZone}" IsVisible="{Binding $parent[dialogHostAvalonia:DialogHost].((vm:MainViewModel)DataContext).VolumePopupOpen, Mode=TwoWay}"/>
+				<views:GroupEditorView DataContext="{Binding CurrentZone}" IsVisible="{Binding $parent[dialogHostAvalonia:DialogHost].((vm:MainViewModel)DataContext).GroupEditorOpen, Mode=TwoWay}"/>
+				<views:QueueView DataContext="{Binding CurrentZone}" IsVisible="{Binding $parent[dialogHostAvalonia:DialogHost].((vm:MainViewModel)DataContext).QueuePopupOpen, Mode=TwoWay}"/>
+			</Grid>
+		</dialogHostAvalonia:DialogHost.DialogContent>
+
+		<Grid Margin="16">
+		<Grid.ColumnDefinitions>
+			<ColumnDefinition Width="*"/>
+			<ColumnDefinition Width="*"/>
+		</Grid.ColumnDefinitions>
+
+		<Grid Grid.Column="0" x:Name="LeftColumn">
+			<Grid.RowDefinitions>
+				<RowDefinition Height="4*"/>
+				<RowDefinition Height="16"/>
+				<RowDefinition Height="42"/>
+				<RowDefinition Height="42"/>
+			</Grid.RowDefinitions>
+
+			<StackPanel x:Name="ArtPanel"
+						Grid.Row="0"
+						Orientation="Vertical">
+				<ComboBox x:Name="RoomCombo" SelectedItem="{Binding CurrentZone, Mode=TwoWay}" HorizontalAlignment="Stretch" Margin="0,0,0,4" Width="{Binding ArtSize}"
+						  ItemsSource="{Binding ZoneList}" Height="60">
+					<ComboBox.ItemTemplate>
+						<DataTemplate x:DataType="vm:GroupViewModel">
+							<Grid>
+								<Grid.ColumnDefinitions>
+									<ColumnDefinition Width="23"/>
+									<ColumnDefinition Width="*"/>
+									<ColumnDefinition Width="40"/>
+								</Grid.ColumnDefinitions>
+								<Grid.RowDefinitions>
+									<RowDefinition Height="*"/>
+									<RowDefinition Height="*"/>
+									<RowDefinition Height="*"/>
+								</Grid.RowDefinitions>
+								<TextBlock Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="2" Text="{Binding Summary}" FontWeight="Bold"/>
+								<TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding NowPlaying.TrackTitle}" FontSize="12"/>
+								<TextBlock Grid.Row="2" Grid.Column="1" Text="{Binding NowPlaying.Artist}" FontSize="10"/>
+								<Button Grid.RowSpan="3" Grid.Column="2"
+										Classes="IconStyle"
+										IsVisible="{Binding RelativeSource={RelativeSource AncestorType={x:Type ComboBoxItem}}, Path=IsSelected, FallbackValue='True', TargetNullValue='False'}"
+										Command="{Binding $parent[Grid;2].((vm:MainViewModel)DataContext).GroupEditorCommand}"
+										Width="40" Content="{ic:SymbolIcon Symbol=SpeakerEdit}" HorizontalContentAlignment="Center" Margin="4,0,4,0"
+										/>
+								<Image Grid.RowSpan="3" Grid.Column="2" 
+									   IsVisible="{Binding RelativeSource={RelativeSource AncestorType={x:Type ComboBoxItem}}, Path=!IsSelected, FallbackValue='False', TargetNullValue='True'}"
+									   asyncImageLoader:ImageLoader.Source="{Binding NowPlaying.Thumbnail}"/>
+							</Grid>
+						</DataTemplate>
+					</ComboBox.ItemTemplate>
+				</ComboBox>
+				<Image asyncImageLoader:ImageLoader.Source="{Binding CurrentZone.NowPlaying.Art}"
+					   Width="{Binding ArtSize}" Height="{Binding ArtSize}"
+					   Stretch="UniformToFill" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+				<ProgressBar x:Name="TrackProgress"
+							 Margin="0,4,0,0"
+							 Value="{Binding CurrentZone.NowPlaying.Position, FallbackValue=0, Mode=OneWay}"
+							 Width="{Binding ArtSize}"/>
+			</StackPanel>
+
+			<Grid Grid.Column="0" Grid.Row="2" VerticalAlignment="Top"
+				  ColumnDefinitions="*,60">
+				<views:VolumeView DataContext="{Binding CurrentZone.GroupVolume}"/>
+				<Button Grid.Column="1" Content="{ic:SymbolIcon Symbol=SpeakerSettings}"
+						Width="42"
+						Classes="IconStyle"
+						IsEnabled="{Binding !!CurrentZone.Players.Count, FallbackValue=False, TargetNullValue=False}"
+						Command="{Binding VolumePopupCommand}"/>
+			</Grid>
+
+			<Grid Grid.Row="3" HorizontalAlignment="Center">
+				<views:TransportControlView DataContext="{Binding CurrentZone.NowPlaying}"/>
+			</Grid>
+		</Grid>
+
+		<Grid Grid.Column="1" x:Name="RightColumn">
+			<Grid.RowDefinitions>
+				<RowDefinition Height="Auto"/>
+				<RowDefinition Height="*"/>
+			</Grid.RowDefinitions>
+			
+			<Grid Grid.Row="0" >
+				<views:NowPlayingView DataContext="{Binding CurrentZone}"/>
+			</Grid>
+
+			<Grid Grid.Row="0">
+				<Button Content="{ic:SymbolIcon Symbol=TaskList}"
+						Width="42"
+						HorizontalAlignment="Right"
+						VerticalAlignment="Bottom"
+						Classes="IconStyle"
+						Command="{Binding QueuePopupCommand}"/>
+			</Grid>
+
+			<Grid Grid.Row="1">
+				<views:MusicPickerView DataContext="{Binding CurrentZone}"/>
+			</Grid>
+		</Grid>
+	</Grid>
+		</dialogHostAvalonia:DialogHost>
+</UserControl>

@@ -1,0 +1,74 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+			 xmlns:vm="clr-namespace:PhonosAvalon.ViewModels"
+			 x:DataType="vm:GroupViewModel"
+             x:Class="PhonosAvalon.Views.GroupEditorView">
+	<Grid Margin="20" DataContext="{Binding GroupEditor}">
+		<Grid.RowDefinitions>
+			<RowDefinition Height="Auto"/>
+			<RowDefinition Height="Auto"/>
+			<RowDefinition Height="Auto"/>
+			<RowDefinition Height="4*" MaxHeight="340"/>
+			<RowDefinition Height="40"/>
+		</Grid.RowDefinitions>
+
+		<TextBlock Text="Groups:" FontSize="14"/>
+		<ListBox Grid.Row="1" ItemsSource="{Binding NamedGroups}" SelectedItem="{Binding SelectedNamedGroup, Mode=TwoWay}">
+			<ListBox.ItemsPanel>
+				<ItemsPanelTemplate>
+					<WrapPanel/>
+				</ItemsPanelTemplate>
+			</ListBox.ItemsPanel>
+			<ListBox.DataTemplates>
+				<DataTemplate DataType="{x:Type vm:NamedGroup}">
+					<Border BorderThickness="2" BorderBrush="Black" CornerRadius="12">
+						<TextBlock Text="{Binding Name}" Margin="6,2,6,2" Padding="2"/>
+					</Border>
+				</DataTemplate>
+			</ListBox.DataTemplates>
+		</ListBox>
+		<TextBlock Grid.Row="2" Text="Select rooms to group:" FontSize="14" Padding="0,8,0,0"/>
+		<ListBox Grid.Row="3"
+				 ItemsSource="{Binding Players}"
+				 SelectionMode="Multiple,Toggle"
+				 SelectedItems="{Binding SelectedPlayers}"
+				 ScrollViewer.VerticalScrollBarVisibility="Visible"
+				 >
+			<ListBox.ItemTemplate>
+				<DataTemplate>
+					<Border BorderThickness="1" BorderBrush="White" Padding="4">
+						<Grid>
+							<Grid.ColumnDefinitions>
+								<ColumnDefinition Width="Auto"/>
+								<ColumnDefinition Width="*"/>
+							</Grid.ColumnDefinitions>
+							<CheckBox IsChecked="{Binding $parent[ListBoxItem].IsSelected}"/>
+							<TextBlock Grid.Column="1" Text="{Binding RoomName}" VerticalAlignment="Center"/>
+						</Grid>
+					</Border>
+				</DataTemplate>
+			</ListBox.ItemTemplate>
+		</ListBox>
+
+		<Grid Grid.Row="4" Margin="0,12,0,0">
+			<Button Content="Apply" Width="120" HorizontalContentAlignment="Center" HorizontalAlignment="Right" Tapped="Button_Ok"/>
+			<Button Content="Cancel" Width="120" HorizontalContentAlignment="Center" HorizontalAlignment="Left" Tapped="Button_Cancel"/>
+		</Grid>
+
+		<Grid Grid.RowSpan="5" Margin="-20" IsVisible="{Binding StatusMessage, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
+			<Border Background="#80808080">
+				<TextBlock 
+					Text="{Binding StatusMessage}" 
+					TextWrapping="Wrap"
+					MaxLines="3"
+					HorizontalAlignment="Center"
+					VerticalAlignment="Center"
+					Padding="50" 
+					Background="White"/>
+			</Border>
+		</Grid>
+	</Grid>
+</UserControl>

@@ -1,0 +1,47 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+             xmlns:vm="clr-namespace:PhonosAvalon.ViewModels"
+			 x:DataType="vm:GroupViewModel"
+             x:Class="PhonosAvalon.Views.NowPlayingView">
+
+	<Design.DataContext>
+		<vm:FakeGroupViewModel/>
+	</Design.DataContext>
+	
+	<UserControl.Styles>
+		<Style Selector="TextBlock.NPItem">
+			<Setter Property="FontSize" Value="20"/>
+			<Setter Property="Margin" Value="0,0,0,8"/>
+		</Style>
+		<Style Selector="TextBlock.NPItemE">
+			<Setter Property="FontSize" Value="12"/>
+			<Setter Property="Margin" Value="8,0,0,8"/>
+			<Setter Property="Padding" Value="4,0,4,0"/>
+			<Setter Property="Background" Value="Black"/>
+			<Setter Property="Foreground" Value="White"/>
+			<Setter Property="VerticalAlignment" Value="Center"/>
+		</Style>
+		<Style Selector="TextBlock.NPTitle">
+			<Setter Property="FontSize" Value="14"/>
+		</Style>
+	</UserControl.Styles>
+
+	<StackPanel Orientation="Vertical" HorizontalAlignment="Left" Margin="32">
+		<TextBlock Text="{Binding Summary, FallbackValue=Starting...}" FontSize="22" Margin="0,0,0,8"/>
+		<TextBlock Text="{Binding NowPlaying.TrackDescription}" Classes="NPTitle"/>
+		<StackPanel Orientation="Horizontal">
+			<TextBlock Text="{Binding NowPlaying.TrackTitle}" Classes="NPItem"/>
+			<TextBlock Text="E" Classes="NPItemE" IsVisible="{Binding NowPlaying.Explicit}"/>
+		</StackPanel>
+		<TextBlock Text="{Binding NowPlaying.ArtistDescription}" Classes="NPTitle"/>
+		<TextBlock Text="{Binding NowPlaying.Artist}" Classes="NPItem"/>
+		<TextBlock Text="{Binding NowPlaying.AlbumDescription}" Classes="NPTitle"/>
+		<TextBlock Text="{Binding NowPlaying.Album}" Classes="NPItem"/>
+		<TextBlock Text="{Binding NowPlaying.InfoDescription}" Classes="NPTitle"/>
+		<TextBlock Text="{Binding NowPlaying.Info}" Classes="NPItem"/>
+	</StackPanel>
+
+</UserControl>
