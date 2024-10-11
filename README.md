@@ -17,24 +17,24 @@ There is a reasonable overview of how Sonos works on the [Sonos Developer Portal
 
 # Overview of the Code
 
-## [UPnP](UPnP.md)
+## [UPnP](./docs/UPnP.md)
 UPnP is the underpinnings for it all. It's the oldest part of the code because, apart from the Eventing code, it hasn't needed much in the way of changes since it was written. It includes the *UPNPServiceGenerator* which takes the API declarations from a device on your network and generates the code and data structures to call those APIs. It runs on .NET Standard 2.0.
 
-## [Sonos](Sonos.md)
+## [Sonos](./docs/Sonos.md)
 Sonos is the next level up and includes classes to represent the key Sonos objects, such as Zones, Players, Households, Groups, MusicServices and other data sources. It too runs on .NET Standard 2.0.
 
-## [PhonosAvalonia (in Samples)](SampleApp.md) 
+## [PhonosAvalonia (in Samples)](./docs/SampleApp.md) 
 This is the included "sample" app that runs on any device that the Avalonia framework supports. It's a full featured Sonos controller, with the ability to play music, control volume, queue actions, group speakers, and browse music service content etc. It runs on .NET8.
 
 ![PhonosAvalonia Mobile](./docs/images/mobile.png)
 
-## [Music Sources](MusicSources.md) 
+## [Music Sources](./docs/MusicSources.md) 
 Shows how every possible music source is represented and enumerated.
 
-## [Music Services](MusicServices.md)
+## [Music Services](./docs/MusicServices.md)
 Shows the details about how Sonos (and this codebase) supports over a hundred music services.
 
-## [Platforms](Platforms.md) 
+## [Platforms](./docs/Platforms.md) 
 This details the differences and issues of each supported platform.
 
 ## Licence
