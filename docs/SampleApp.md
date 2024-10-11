@@ -32,14 +32,14 @@ I have tried to keep external dependencies to a minimum, but there are a few to 
 ## The App In Action
 Here are a few screenshots showing key pieces of UX:
 
-![Mobile](./docs/images/mobile.png)
-![Desktop](./docs/images/desktop.png)
-![Search](./docs/images/search.png)
-![Groups](./docs/images/groups.png)
-![Queue](./docs/images/queue.png)
-![Group Edit](./docs/images/groupedit.png)
-![Group Volume](./docs/images/groupvolume.png)]
-![Display](./docs/images/display.png)]
+![Mobile](/docs/images/mobile.png)
+![Desktop](/docs/images/desktop.png)
+![Search](/docs/images/search.png)
+![Groups](/docs/images/groups.png)
+![Queue](/docs/images/queue.png)
+![Group Edit](/docs/images/groupedit.png)
+![Group Volume](/docs/images/groupvolume.png)]
+![Display](/docs/images/display.png)]
 
 
 [^1]: Seamless music service support requires you to bring your own decryption function.
