@@ -4,6 +4,7 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
 			 xmlns:ic="using:FluentIcons.Avalonia.MarkupExtensions"
+             xmlns:view="clr-namespace:PhonosAvalon.Views;assembly=PhonosAvalon"
 			 xmlns:vm="clr-namespace:PhonosAvalon.ViewModels"
 			 x:DataType="vm:IVolume"
 			 x:Name="Page"
@@ -28,12 +29,13 @@
 	<Grid Margin="8,0,8,0"
 		  ColumnDefinitions="42,*,42">
 
-		<TextBlock
+		<StackPanel Orientation="Horizontal"
 			Grid.Column="1"
 			VerticalAlignment="Top" HorizontalAlignment="Left"
-			Text="{Binding ElementName=Page, Path=Title}"
-			IsVisible="{Binding ElementName=Page, Path=Title, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
-			/>
+			IsVisible="{Binding ElementName=Page, Path=Title, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
+			<TextBlock Text="{Binding ElementName=Page, Path=Title}"/>
+			<view:BatteryView DataContext="{Binding ElementName=Page, Path=Battery}"/>
+		</StackPanel>
 
 		<ToggleButton
 			Margin="0,0,4,0"

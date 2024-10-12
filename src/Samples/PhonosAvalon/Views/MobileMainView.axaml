@@ -62,8 +62,10 @@
 								<RowDefinition Height="*"/>
 								<RowDefinition Height="*"/>
 							</Grid.RowDefinitions>
-							<TextBlock Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="2"
-									   Text="{Binding Summary}" FontWeight="Bold"/>
+							<StackPanel Orientation="Horizontal" Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="2" VerticalAlignment="Center">
+								<TextBlock Text="{Binding Summary}" FontWeight="Bold"/>
+								<views:BatteryView DataContext="{Binding Players[0].BatteryState}" VerticalAlignment="Top"/>
+							</StackPanel>
 							<TextBlock Grid.Row="1" Grid.Column="1"
 									   IsVisible="{Binding RelativeSource={RelativeSource AncestorType={x:Type ComboBoxItem}}, Path=!IsSelected, FallbackValue='False', TargetNullValue='True'}"
 									   Text="{Binding NowPlaying.TrackTitle}" FontSize="12"/>

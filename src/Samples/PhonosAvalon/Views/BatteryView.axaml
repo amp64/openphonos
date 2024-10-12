@@ -1,0 +1,30 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+			 xmlns:vm="clr-namespace:PhonosAvalon.ViewModels"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+			 x:DataType="vm:BatteryViewModel"
+             x:Class="PhonosAvalon.Views.BatteryView">
+	<Grid
+		ColumnDefinitions="32,Auto" Height="16"
+		ToolTip.Tip="{Binding Summary}"
+		IsVisible="{Binding, Converter={x:Static ObjectConverters.IsNotNull}}">
+		<Canvas Margin="0,0,2,0" Width="32" Height="32">
+			<Canvas.RenderTransform>
+				<ScaleTransform ScaleX="0.16" ScaleY="0.2"/>
+			</Canvas.RenderTransform>
+			<Polyline Points="0,0 112,0 112,10 116,10 116,30 112,30 112,40 0,40 0,0"
+					  Stroke="Black"
+					  StrokeThickness="4"
+					  StrokeLineCap="Round"
+					  StrokeJoin="Round"/>
+			<Rectangle Fill="Black" Width="{Binding Charged}" Height="30" RadiusX="3" RadiusY="3" Canvas.Left="5" Canvas.Top="5"/>
+			<Polygon Canvas.Left="8" Points="20,18 45,18 45,10 80,22 55,22 55,30 20,18" Fill="White" Stroke="Black" StrokeThickness="2"
+					 IsVisible="{Binding Charging}"/>
+		</Canvas>
+		<TextBlock Text="{Binding Charged, StringFormat={}{0}%}" 
+				   Grid.Column="1"
+				   FontSize="6" VerticalAlignment="Center"/>
+	</Grid>
+</UserControl>

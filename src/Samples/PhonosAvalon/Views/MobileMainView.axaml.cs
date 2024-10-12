@@ -27,6 +27,9 @@ public partial class MobileMainView : UserControl
         path = System.IO.Path.Combine(path, "Cache", "Images");
         ImageLoader.AsyncImageLoader = new DiskCachedWebImageLoader(path);
 
+        OpenPhonos.Sonos.Household.LastDitchDeviceList = new List<string>()
+            { "192.168.40.13", "192.168.40.14" };
+
         InitializeComponent();
 
         DialogHost.PopupPositioner = new DialogPopupPositioner();

@@ -15,7 +15,7 @@ namespace PhonosAvalon.ViewModels
 {
     public class GroupViewModel : ObservableObject
     {
-        public static bool WatchDeviceVolumeEvents = true;
+        public static bool WatchDeviceEvents = true;
 
         private readonly Group ActualGroup;
         private ICommand _PlayNowCommand;
@@ -121,11 +121,11 @@ namespace PhonosAvalon.ViewModels
                 await ActualGroup.Coordinator.SubscribeToEventsAsync(Listener.MinimumTimeout, what);
             }
 
-            if (WatchDeviceVolumeEvents)
+            if (WatchDeviceEvents)
             {
                 foreach (var p in ActualGroup.VisiblePlayers)
                 {
-                    var what = new PlayerEventSelector() { Renderer = true };
+                    var what = new PlayerEventSelector() { Renderer = true, Device = true };
                     p.PropertyChanged += Player_PropertyChanged;
                     await p.SubscribeToEventsAsync(Listener.MinimumTimeout, what);
                 }
@@ -145,7 +145,7 @@ namespace PhonosAvalon.ViewModels
                 await ActualGroup.Coordinator.UnsubscribeToEventsAsync(what);
             }
 
-            if (WatchDeviceVolumeEvents)
+            if (WatchDeviceEvents)
             {
                 foreach (var p in ActualGroup.VisiblePlayers)
                 {

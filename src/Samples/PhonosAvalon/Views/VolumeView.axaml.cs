@@ -1,5 +1,6 @@
 using Avalonia;
 using Avalonia.Controls;
+using PhonosAvalon.ViewModels;
 
 namespace PhonosAvalon.Views
 {
@@ -8,10 +9,19 @@ namespace PhonosAvalon.Views
         public static readonly StyledProperty<string> TitleProperty =
                 AvaloniaProperty.Register<VolumeView, string>(nameof(Title), defaultValue: string.Empty);
 
+        public static readonly StyledProperty<BatteryViewModel?> BatteryProperty =
+                AvaloniaProperty.Register<VolumeView, BatteryViewModel?>(nameof(Battery), defaultValue: null);
+
         public string Title
         {
             get => GetValue(TitleProperty);
             set => SetValue(TitleProperty, value);
+        }
+
+        public BatteryViewModel? Battery
+        {
+            get => GetValue(BatteryProperty);
+            set => SetValue(BatteryProperty, value);
         }
 
         public VolumeView()

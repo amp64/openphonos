@@ -13,17 +13,32 @@ namespace PhonosAvalon.ViewModels
         private bool DontSendToDevice;
         private int _Volume;
         private bool _Muted;
+        private BatteryViewModel? _BatteryState;        // null if no battery
 
         public int Volume { get => _Volume; set => SetVolume(value); }
         public bool Muted { get => _Muted; set => SetMuted(value); }
         public bool Fixed { get => ActualPlayer.FixedVolume; set => throw new NotImplementedException(); }
         public string RoomName => ActualPlayer.RoomName;
+        public BatteryViewModel? BatteryState { get => _BatteryState; private set => SetProperty(ref _BatteryState, value); }
 
         public PlayerViewModel(Player p)
         {
             ActualPlayer = p;
             _Volume = p.DeviceVolume;
             _Muted = p.IsMuted;
+            if (p.HasBattery)
+            {
+                BatteryState = new BatteryViewModel();
+                p.PropertyChanged += Player_PropertyChanged;
+            }
+        }
+
+        private void Player_PropertyChanged(object sender, System.ComponentModel.PropertyChangedEventArgs e)
+        {
+            if (e.PropertyName == nameof(Player.BatteryState))
+            {
+                BatteryState?.Update(ActualPlayer.BatteryState);
+            }
         }
 
         // This is when the UX asks to change it

@@ -144,7 +144,7 @@ namespace OpenPhonos.Sonos
         public string SoftwareGeneration { get; }
         public string MinCompatibleVersion { get; }
         public string WirelessMode { get; private set; }
-        public string BatteryState { get; private set; }
+        public BatteryStatus BatteryState { get; private set; }
         public int DeviceVolume { get; private set; }
         public bool HasVolume { get; private set; }
         public bool FixedVolume { get; private set; }
@@ -472,24 +472,51 @@ namespace OpenPhonos.Sonos
                 {
                     var items = moreinfo.Split(',');
                     var battery = new Dictionary<string, string>(items.Length);
+                    bool foundBattery = false;
                     foreach (var item in items)
                     {
                         var parts = item.Split(':');
                         battery[parts[0]] = parts[1];
+                        foundBattery |= parts[0] == "BattChg";
                     }
-                    string charging = battery["BattChg"].ToLower().Replace('_', ' ');
-                    int rawPercent = int.Parse(battery["RawBattPct"]);
-                    int percent = int.Parse(battery["BattPct"]);
-                    int temp = int.Parse(battery["BattTmp"]);
 
-                    BatteryState = string.Format("{0}% {1}°C ({2}) ", percent, temp, charging);
-                    PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(BatteryState)));
+                    if (foundBattery)
+                    {
+                        bool charging = battery["BattChg"] == "CHARGING";         // or "NOT_CHARGING"
+                        uint rawPercent = uint.Parse(battery["RawBattPct"]);
+                        uint percent = uint.Parse(battery["BattPct"]);
+                        int temp = int.Parse(battery["BattTmp"]);
+
+                        if (BatteryState == null)
+                        {
+                            BatteryState = new BatteryStatus();
+                        }
+
+                        BatteryState.Charging = charging;
+                        BatteryState.Percent = percent;
+                        BatteryState.RawPercent = rawPercent;
+                        BatteryState.Temperature = temp;
+                        PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(BatteryState)));
+                    }
                 }
                 catch (Exception)
                 { }
             }
             
             await Task.FromResult(true);
+        }
+
+        public class BatteryStatus
+        {
+            public bool Charging;
+            public uint Percent;
+            public uint RawPercent;
+            public int Temperature;
+
+            public override string ToString()
+            {
+                return string.Format("{0}% {1}°C ({2}) ", Percent, Temperature, Charging ? "Charging" : "Not charging");
+            }
         }
 
         private async Task RendererSubscriptionHandler(Service sender, EventSubscriptionArgs args)

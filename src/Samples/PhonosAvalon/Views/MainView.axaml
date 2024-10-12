@@ -63,7 +63,10 @@
 									<RowDefinition Height="*"/>
 									<RowDefinition Height="*"/>
 								</Grid.RowDefinitions>
-								<TextBlock Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="2" Text="{Binding Summary}" FontWeight="Bold"/>
+								<StackPanel Orientation="Horizontal" Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="2" VerticalAlignment="Center">
+									<TextBlock Text="{Binding Summary}" FontWeight="Bold"/>
+									<views:BatteryView DataContext="{Binding Players[0].BatteryState}"/>
+								</StackPanel>
 								<TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding NowPlaying.TrackTitle}" FontSize="12"/>
 								<TextBlock Grid.Row="2" Grid.Column="1" Text="{Binding NowPlaying.Artist}" FontSize="10"/>
 								<Button Grid.RowSpan="3" Grid.Column="2"

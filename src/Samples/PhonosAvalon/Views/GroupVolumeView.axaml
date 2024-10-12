@@ -27,7 +27,7 @@
 			<ListBox.ItemTemplate>
 				<DataTemplate>
 					<Border BorderThickness="0" BorderBrush="White" Padding="2">
-						<view:VolumeView Title="{Binding RoomName}"/>
+						<view:VolumeView Title="{Binding RoomName}" Battery="{Binding BatteryState}"/>
 					</Border>
 				</DataTemplate>
 			</ListBox.ItemTemplate>
