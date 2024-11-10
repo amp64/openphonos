@@ -29,6 +29,12 @@ namespace PhonosAvalon
             return false;
         }
 
+        public bool IsUsableNetwork(NetworkInterface network, out string error)
+        {
+            error = null;
+            return true;
+        }
+
         public string Name()
         {
             return "Name";

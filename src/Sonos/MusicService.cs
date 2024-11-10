@@ -43,6 +43,7 @@ namespace OpenPhonos.Sonos
         public string subtitle;
         public bool canEnumerate;
         public bool canFavorite;
+        public bool @explicit;
         public string art;
         public string mimetype;
         public string trackNumber;
@@ -295,6 +296,7 @@ namespace OpenPhonos.Sonos
                         canEnumerate = enumerable,
                         art = (string)item.Element(XName.Get("albumArtURI", ServiceNamespace)),
                         attributes = ExtractAttributes(item),
+                        @explicit = ExtractExplicit(item),
                     };
                 }
                 else if (item.Name == XName.Get("mediaMetadata", ServiceNamespace))
@@ -315,6 +317,7 @@ namespace OpenPhonos.Sonos
                         canEnumerate = false,
                         mimetype = (string)item.Element(XName.Get("mimeType", ServiceNamespace)),
                         attributes = ExtractAttributes(item, trackMd.FirstOrDefault()),
+                        @explicit = ExtractExplicit(item),
                     };
 
                     var stream = item.Descendants(XName.Get("streamMetadata", ServiceNamespace)).FirstOrDefault();
@@ -363,6 +366,7 @@ namespace OpenPhonos.Sonos
                     md.IsContainer,
                     music.canFavorite,
                     md.IsPlayable && !music.cannotAlarm,
+                    music.@explicit,
                     md.Metadata,
                     md.Res.Replace("/", "%2f").Replace("#", "%23"),         // & critical for Radio (removed), / for Prime stations
                     music.art,
@@ -1145,13 +1149,13 @@ xmlns=""urn:schemas-upnp-org:metadata-1-0/DIDL-Lite/"">
                     foreach (var item in list.ToList())
                     {
                         string sub = item.subtitle != null ? LookupLocalizedString(item.subtitle) : null;
-                        newlist.Add(new MusicServiceItem(item.id, TranslateId(item.raw), sub, playable: false, queueable: false, container: true, canfave: false, alarmable: false, metadata: null, res: null, art: null, this));
+                        newlist.Add(new MusicServiceItem(item.id, TranslateId(item.raw), sub, playable: false, queueable: false, container: true, canfave: false, alarmable: false, expl:false, metadata: null, res: null, art: null, this));
                     }
 
                     foreach (var item in custom.ToList())
                     {
                         string sub = LookupLocalizedString(item.stringId);
-                        newlist.Add(new MusicServiceItem(item.mappedId, sub, string.Empty, false, false, true, false, false, null, null, null, this));
+                        newlist.Add(new MusicServiceItem(item.mappedId, sub, string.Empty, false, false, true, false, false, false, null, null, null, this));
                     }
 
                     CachedSearchCategories = new MusicServiceResult(newlist, newlist.Count());
@@ -1165,7 +1169,7 @@ xmlns=""urn:schemas-upnp-org:metadata-1-0/DIDL-Lite/"">
                     {
                         foreach (var item in result.Items)
                         {
-                            newlist.Add(new MusicServiceItem(item.Id, item.Title, string.Empty, false, false, true, false, false, null, null, null, this /*item.Id*/));
+                            newlist.Add(new MusicServiceItem(item.Id, item.Title, string.Empty, false, false, true, false, false, false, null, null, null, this));
                         }
                     }
 
@@ -1453,7 +1457,7 @@ xmlns=""urn:schemas-upnp-org:metadata-1-0/DIDL-Lite/"">
                     // for Apple Music / Library
                     canEnum = true;
                 }
-                var data = new MusicServiceItem(id, name, string.Empty, false, false, canEnum, false, false, string.Empty, string.Empty, string.Empty, this);
+                var data = new MusicServiceItem(id, name, string.Empty, false, false, canEnum, false, false, false, string.Empty, string.Empty, string.Empty, this);
                 data.ParentDisplayData = rootDisplayType;
 
                 if (v.TryGetProperty("displayType", out var d))
@@ -1744,6 +1748,12 @@ xmlns=""urn:schemas-upnp-org:metadata-1-0/DIDL-Lite/"">
             if (art == null)
                 art = (string)item.Descendants(XName.Get("streamMetadata", ServiceNamespace)).Elements(XName.Get("logo", ServiceNamespace)).FirstOrDefault();
             return art;
+        }
+
+        private bool ExtractExplicit(XElement item)
+        {
+            var e = (string)item.Descendants(XName.Get("tags", ServiceNamespace)).Descendants(XName.Get("explicit", ServiceNamespace)).FirstOrDefault();
+            return e == "1";
         }
 
         // from https://developer.sonos.com/build/content-service-add-features/customize-display/configure-display-types/ plus podcast-specifics

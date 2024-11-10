@@ -21,6 +21,8 @@
 				<Binding Path="VolumePopupOpen"/>
 				<Binding Path="GroupEditorOpen"/>
 				<Binding Path="QueuePopupOpen"/>
+				<Binding Path="StartupPopupOpen"/>
+				<Binding Path="AboutPopupOpen"/>
 			</MultiBinding>
 		</dialogHostAvalonia:DialogHost.IsOpen>
 		<dialogHostAvalonia:DialogHost.DialogContent>
@@ -28,6 +30,8 @@
 				<views:GroupVolumeView DataContext="{Binding CurrentZone}" IsVisible="{Binding $parent[dialogHostAvalonia:DialogHost].((vm:MainViewModel)DataContext).VolumePopupOpen, Mode=TwoWay}"/>
 				<views:GroupEditorView DataContext="{Binding CurrentZone}" IsVisible="{Binding $parent[dialogHostAvalonia:DialogHost].((vm:MainViewModel)DataContext).GroupEditorOpen, Mode=TwoWay}"/>
 				<views:QueueView DataContext="{Binding CurrentZone}" IsVisible="{Binding $parent[dialogHostAvalonia:DialogHost].((vm:MainViewModel)DataContext).QueuePopupOpen, Mode=TwoWay}"/>
+				<views:StartupView DataContext="{Binding}" IsVisible="{Binding $parent[dialogHostAvalonia:DialogHost].((vm:MainViewModel)DataContext).StartupPopupOpen, Mode=TwoWay}"/>
+				<views:AboutView DataContext="{Binding}" IsVisible="{Binding $parent[dialogHostAvalonia:DialogHost].((vm:MainViewModel)DataContext).AboutPopupOpen, Mode=TwoWay}"/>
 			</Grid>
 		</dialogHostAvalonia:DialogHost.DialogContent>
 
@@ -117,12 +121,16 @@
 			</Grid>
 
 			<Grid Grid.Row="0">
-				<Button Content="{ic:SymbolIcon Symbol=TaskList}"
-						Width="42"
-						HorizontalAlignment="Right"
-						VerticalAlignment="Bottom"
-						Classes="IconStyle"
-						Command="{Binding QueuePopupCommand}"/>
+				<StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Bottom">
+					<Button Content="{ic:SymbolIcon Symbol=ChatHelp}"
+							Width="42"
+							Classes="IconStyle"
+							Command="{Binding AboutCommand}"/>
+					<Button Content="{ic:SymbolIcon Symbol=TaskList}"
+							Width="42"
+							Classes="IconStyle"
+							Command="{Binding QueuePopupCommand}"/>
+				</StackPanel>
 			</Grid>
 
 			<Grid Grid.Row="1">

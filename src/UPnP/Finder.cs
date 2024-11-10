@@ -185,12 +185,9 @@ namespace OpenPhonos.UPnP
             await TestBroadcastAsync();
 
             WorkingHosts = FindAdapters(out string problem);
+            NetLogger.LikelyProblem = problem;
 
-            if (WorkingHosts.Count == 0)
-            {
-                NetLogger.LikelyProblem = problem;
-            }
-            else
+            if (WorkingHosts.Count != 0)
             {
                 List<Task> SearchTasks = new List<Task>();
                 var multicastIP = IPAddress.Parse("239.255.255.250");
@@ -278,6 +275,18 @@ namespace OpenPhonos.UPnP
             {
                 NetLogger.WriteLine("Ignoring {0} as link-local", name);
                 return false;
+            }
+
+            bool usable = Platform.Instance.IsUsableNetwork(host, out string whynot);
+            if (!usable)
+            {
+                why = whynot;
+                NetLogger.WriteLine("Ignoring {0} as {1}", name, why);
+                return false;
+            }
+            else if (why != null)
+            {
+                NetLogger.WriteLine("Warning {0} as {1}", name, why);
             }
 
             NetLogger.WriteLine($"Found {name} looks promising", name);

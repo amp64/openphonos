@@ -31,13 +31,14 @@ namespace PhonosAvalon
         {
             public string? controllerId { get; set; }
             public string? currentZoneId { get; set; }
+            public string? lastVersion { get; set; }
         }
 
         private string SettingsFilename;
 
         private Settings()
         {
-            SettingsFilename = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData, Environment.SpecialFolderOption.Create), "settings.json");
+            SettingsFilename = Path.Combine((App.Current as App).DataFilePath, "settings.json");
             Load();
         }
 
@@ -56,6 +57,7 @@ namespace PhonosAvalon
 
                 _controllerId = settings.controllerId;
                 _currentZoneId = settings.currentZoneId;
+                _lastVersion = settings.lastVersion;
             }
             catch (Exception ex)
             {
@@ -69,6 +71,7 @@ namespace PhonosAvalon
             {
                 controllerId = _controllerId,
                 currentZoneId = _currentZoneId,
+                lastVersion = _lastVersion,
             };
 
             try
@@ -94,6 +97,13 @@ namespace PhonosAvalon
         {
             get => _currentZoneId;
             set => Setter(value, ref _currentZoneId);
+        }
+
+        private string? _lastVersion;
+        internal string? LastVersion
+        {
+            get => _lastVersion;
+            set => Setter(value, ref _lastVersion);
         }
 
         private static void Setter<T>(T value, ref T member, [CallerMemberName] string? name = null)

@@ -301,6 +301,13 @@ namespace PhonosAvalon.ViewModels
         {
             return ActualGroup.FindPlayerById(p.UniqueName) != null;
         }
+
+        internal void FillWithFakes()
+        {
+            _NowPlaying = new FakeNowPlayingViewModel();
+            _GroupVolume = new FakeGroupVolumeViewModel();
+            _Queue = new FakeQueueViewModel();
+        }
     }
 
     public class FakeGroupViewModel : GroupViewModel
@@ -321,7 +328,7 @@ namespace PhonosAvalon.ViewModels
         public override string Summary => _Summary;
     }
 
-    public class FakeGroupVolumeViewModel : IVolume
+    public class FakeGroupVolumeViewModel : ViewModelBase, IVolume
     {
         public FakeGroupVolumeViewModel()
         {
@@ -333,11 +340,10 @@ namespace PhonosAvalon.ViewModels
         private bool _Fixed;
         private NowPlayingViewModel _NowPlaying;
 
-        public int Volume { get => _Volume; set => throw new NotImplementedException(); }
-        public bool Muted { get => _Muted; set => throw new NotImplementedException(); }
-        public bool Fixed { get => _Fixed; set => throw new NotImplementedException(); }
+        public int Volume { get => _Volume; set => SetProperty(ref _Volume, value); }
 
-        public NowPlayingViewModel NowPlaying { get => _NowPlaying; }
+        public bool Muted { get => _Muted; set => SetProperty(ref _Muted, value); }
+        public bool Fixed { get => _Fixed; set => SetProperty(ref _Fixed, value); }
 
         public event PropertyChangedEventHandler? PropertyChanged;
     }

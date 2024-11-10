@@ -55,6 +55,8 @@ namespace OpenPhonos.UPnP
 
         public static bool PerfMarkers { get; set; }
 
+        public static string ScopeId {  get => _ScopeId; }
+
         public enum LogType
         {
             LogAll = 1,

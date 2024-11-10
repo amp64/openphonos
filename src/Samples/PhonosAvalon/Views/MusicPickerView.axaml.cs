@@ -257,3 +257,17 @@ public class MusicTemplateSelector : IDataTemplate
         return data is MusicItem;
     }
 }
+
+// Converts a bool into either a null string (if false) or " E " (if true) for Explicit display
+public class ExplicitConverter : IValueConverter
+{
+    public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
+    {
+        return value is bool item && item ? " E " : null;
+    }
+
+    public object? ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
+    {
+        throw new NotImplementedException();
+    }
+}

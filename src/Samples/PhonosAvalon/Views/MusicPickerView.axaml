@@ -19,6 +19,19 @@
 			<Setter Property="FontSize" Value="14"/>
 			<Setter Property="FontWeight" Value="DemiBold"/>
 		</Style>
+		<Style Selector="TextBlock.Line0E">
+			<Setter Property="FontSize" Value="10"/>
+			<Setter Property="Margin" Value="8,0,0,0"/>
+			<Setter Property="Padding" Value="4,0,4,0"/>
+			<Setter Property="Background" Value="Black"/>
+			<Setter Property="Foreground" Value="White"/>
+			<Setter Property="VerticalAlignment" Value="Center"/>
+		</Style>
+		<Style Selector="Run.HeaderE">
+			<Setter Property="FontSize" Value="12"/>
+			<Setter Property="Background" Value="Black"/>
+			<Setter Property="Foreground" Value="White"/>
+		</Style>
 
 		<Style Selector="ListBoxItem">
 			<Setter Property="Padding" Value="4" />
@@ -36,6 +49,7 @@
 		<local:ViewTypeConverter x:Key="ViewTypeConverter"/>
 		<local:SafeGetItemConverter x:Key="SafeGetItemConverter"/>
 		<local:StringSameConverter x:Key="StringSameConverter" DefaultValue="albumArtUri"/>
+		<local:ExplicitConverter x:Key="ExplicitConverter"/>
 
 		<!-- This is used in the default list view -->
 		<DataTemplate x:Key="MusicItemListTemplate" DataType="{x:Type OpenPhonos:MusicItem}">
@@ -51,7 +65,10 @@
 				</Grid.RowDefinitions>
 
 				<StackPanel Orientation="Vertical" Grid.Column="1" Grid.ColumnSpan="1" Margin="4,0,0,0" VerticalAlignment="Center">
-					<TextBlock Text="{Binding Line0}" HorizontalAlignment="Left" Classes="Line0"/>
+					<StackPanel Orientation="Horizontal" HorizontalAlignment="Left">
+						<TextBlock Text="{Binding Line0}" Classes="Line0"/>
+						<TextBlock Text="E" Classes="Line0E" IsVisible="{Binding IsExplicit}"/>
+					</StackPanel>
 					<TextBlock Text="{Binding Line1}" HorizontalAlignment="Left" IsVisible="{Binding Line1, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
 				</StackPanel>
 				<Image Grid.Column="0" Grid.RowSpan="1" Margin="2"
@@ -118,7 +135,10 @@
 			  ColumnDefinitions="100,*" RowDefinitions="100,Auto">
 			<Image asyncImageLoader:ImageLoader.Source="{Binding ParentItem.Item.ArtUriAsync^, TargetNullValue={StaticResource DefaultArt}}" Stretch="Uniform"/>
 			<StackPanel Grid.Column="1" Orientation="Vertical" VerticalAlignment="Center" Margin="8,0,0,0">
-				<TextBlock Text="{Binding ParentItem.Header0}" Classes="Line0" TextWrapping="Wrap"/>
+				<TextBlock Classes="Line0" TextWrapping="Wrap">
+					<Run Text="{Binding ParentItem.Header0}"/>
+					<Run Text="{Binding ParentItem.Item.IsExplicit, Converter={StaticResource ExplicitConverter}}" Classes="HeaderE"/>
+				</TextBlock>
 				<TextBlock Text="{Binding ParentItem.Header1}" TextWrapping="Wrap"/>
 			</StackPanel>
 			<TextBlock Grid.Row="1" Grid.ColumnSpan="2" Text="{Binding ParentItem.Header2}"

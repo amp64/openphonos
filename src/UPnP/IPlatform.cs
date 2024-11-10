@@ -7,7 +7,7 @@ namespace OpenPhonos.UPnP
     public interface IPlatform
     {
         /// <summary>
-        /// Does the device only supports WiFi networks (eg a Phone)
+        /// Does the device only support WiFi networks (eg a Phone)
         /// </summary>
         /// <returns></returns>
         bool IsAlwaysWiFi();
@@ -31,7 +31,7 @@ namespace OpenPhonos.UPnP
         string FullPlatformName();
 
         /// <summary>
-        /// Ectract a "nice" name given a network adaptor
+        /// Extract a "nice" name given a network adaptor
         /// </summary>
         /// <param name="network"></param>
         /// <returns></returns>
@@ -42,5 +42,10 @@ namespace OpenPhonos.UPnP
         /// </summary>
         /// <param name="uiAction"></param>
         void OnUIThread(Func<Task> uiAction);
+
+        /// <summary>
+        /// Is this network going to work? If not, return true and an error message, if maybe, return false and a warning message
+        /// </summary>
+        bool IsUsableNetwork(NetworkInterface network, out string error);
     }
 }

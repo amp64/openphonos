@@ -1,0 +1,72 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+             x:Class="PhonosAvalon.Views.AboutView"
+             xmlns:vm="clr-namespace:PhonosAvalon.ViewModels"
+			 x:DataType="vm:MainViewModel"
+			 >
+	<UserControl.Styles>
+		<Style Selector="TextBlock">
+			<Setter Property="HorizontalAlignment" Value="Center"/>
+			<Setter Property="TextWrapping" Value="Wrap"/>
+			<Setter Property="MaxLines" Value="2"/>
+		</Style>
+		<Style Selector="TextBlock.Heading">
+			<Setter Property="HorizontalAlignment" Value="Center"/>
+			<Setter Property="TextWrapping" Value="Wrap"/>
+			<Setter Property="MaxLines" Value="2"/>
+			<Setter Property="FontSize" Value="16"/>
+			<Setter Property="FontWeight" Value="Bold"/>
+			<Setter Property="Margin" Value="0,12,0,0"/>
+		</Style>
+		<Style Selector="TextBlock.List">
+			<Setter Property="HorizontalAlignment" Value="Left"/>
+			<Setter Property="TextWrapping" Value="Wrap"/>
+			<Setter Property="MaxLines" Value="50"/>
+			<Setter Property="FontSize" Value="14"/>
+		</Style>
+		<Style Selector="Button">
+			<Setter Property="HorizontalAlignment" Value="Stretch"/>
+			<Setter Property="HorizontalContentAlignment" Value="Center"/>
+			<Setter Property="Margin" Value="10,0,10,0"/>
+		</Style>
+	</UserControl.Styles>
+
+	<Grid Margin="20" RowDefinitions="Auto,*,Auto">
+		<StackPanel Grid.Row="0" Orientation="Vertical">
+			<TextBlock Text="{Binding AppName}" FontSize="24" FontWeight="Bold"/>
+			<TextBlock Text="{Binding AppVersion}" FontSize="14"/>
+			<TextBlock Text="{Binding Copyright}" FontSize="14"/>
+			<TextBlock Text="This is an experimental release - please let us know all of your feedback." Margin="0,12,0,0" FontSize="14"/>
+
+			<TextBlock Text="Known issues" Classes="Heading"/>
+			<TextBlock xml:space="preserve" Classes="List">The Queue page is incomplete.
+			</TextBlock>
+			<TextBlock Text="History" Classes="Heading"/>
+		</StackPanel>
+		<ScrollViewer Grid.Row="1">
+			<Grid>
+			<TextBlock Classes="List" FontWeight="Bold" Text="Version 1.0.1"/>
+			<TextBlock xml:space="preserve" Classes="List">
+Windows: First release.
+			</TextBlock>
+			</Grid>
+		</ScrollViewer>
+		<StackPanel Grid.Row="2">
+			<TextBlock Text="Credits" Classes="Heading"/>
+			<WrapPanel>
+				<HyperlinkButton NavigateUri="https://github.com/amp64/openphonos" Content="OpenPhonos"/>
+				<HyperlinkButton NavigateUri="https://github.com/AvaloniaUI/Avalonia" Content="Avalonia"/>
+				<HyperlinkButton NavigateUri="https://github.com/AvaloniaUtils/AsyncImageLoader.Avalonia" Content="AsyncImageLoader.Avalonia"/>
+				<HyperlinkButton NavigateUri="https://github.com/AvaloniaUtils/DialogHost.Avalonia" Content="DialogHost.Avalonia"/>
+				<HyperlinkButton NavigateUri="https://github.com/davidxuang/FluentIcons" Content="FluentIcons"/>
+			</WrapPanel>
+			<Grid ColumnDefinitions="*,2*,2*,*" Margin="0,12,0,0">
+				<Button Grid.Column="1" Content="Feedback" Command="{Binding FeedbackCommand}"/>
+				<Button Grid.Column="2" Content="OK" Click="OkButton_Click"/>
+			</Grid>
+		</StackPanel>
+	</Grid>
+</UserControl>

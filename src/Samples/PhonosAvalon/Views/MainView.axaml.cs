@@ -15,7 +15,8 @@ public partial class MainView : UserControl
     public MainView()
     {
         ImageLoader.AsyncImageLoader.Dispose();
-        ImageLoader.AsyncImageLoader = new DiskCachedWebImageLoader();
+        string path = System.IO.Path.Combine((App.Current as App).DataFilePath, "Cache", "Images");
+        ImageLoader.AsyncImageLoader = new DiskCachedWebImageLoader(path);
 
         InitializeComponent();
 

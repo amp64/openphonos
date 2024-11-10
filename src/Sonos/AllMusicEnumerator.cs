@@ -44,7 +44,7 @@ namespace OpenPhonos.Sonos
             _All.Add(new MusicEnumeratorItem(new SonosPlaylistEnumerator()));
             _All.Add(new MusicEnumeratorItem(new LineInEnumerator()));
 
-            if (provider.GetMusicServices.Count > 0)
+            if (provider.GetMusicServices?.Count > 0)
             {
                 AddMusicServices();
             }

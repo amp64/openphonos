@@ -24,6 +24,7 @@ namespace OpenPhonos.Sonos
         public bool IsDeletable { get; protected set; }
         public bool IsQueueable { get; protected set; }
         public bool IsError { get; protected set; }
+        public bool IsExplicit { get; protected set; }
 
         public DisplayData DisplayData { get; set; }
         public DisplayData ParentDisplayData { get; set; }

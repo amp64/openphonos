@@ -194,7 +194,7 @@ namespace OpenPhonos.Sonos
                 return null;
         }
 
-        internal async Task<MusicService> GetServiceBySnAsync(string sn)
+        public async Task<MusicService> GetServiceBySnAsync(string sn)
         {
             var services = AvailableServices;
             if (services != null)

@@ -1,0 +1,35 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+             xmlns:vm="clr-namespace:PhonosAvalon.ViewModels"
+             x:Class="PhonosAvalon.Views.StartupView"
+			 x:DataType="vm:MainViewModel"
+			 x:CompileBindings="True">
+	<UserControl.Styles>
+		<Style Selector="TextBlock">
+			<Setter Property="FontSize" Value="20"/>
+			<Setter Property="HorizontalAlignment" Value="Center"/>
+		</Style>
+		<Style Selector="Button">
+			<Setter Property="HorizontalAlignment" Value="Stretch"/>
+			<Setter Property="HorizontalContentAlignment" Value="Center"/>
+			<Setter Property="Margin" Value="10,0,10,0"/>
+		</Style>
+	</UserControl.Styles>
+	
+	<Grid Margin="20">
+		<StackPanel Orientation="Vertical">
+			<TextBlock Text="Searching for your Sonos devices..."/>
+			<ProgressBar IsIndeterminate="True" Margin="0,20,0,20" IsVisible="{Binding StartupSearching}"/>
+			<TextBlock Text="{Binding StartupMessage}" TextWrapping="Wrap" MaxLines="3"/>
+			<Grid Margin="0,20,0,0" IsVisible="{Binding !StartupSearching}" ColumnDefinitions="*,*,*,*">
+				<Button CommandParameter="R" Grid.Column="0" Content="Retry" Command="{Binding StartupFailedCommand}"/>
+				<Button CommandParameter="H" Grid.Column="1" Content="Help" Command="{Binding StartupFailedCommand}"/>
+				<Button CommandParameter="D" Grid.Column="2" Content="Demo" Command="{Binding StartupFailedCommand}"/>
+				<Button CommandParameter="Q" Grid.Column="3" Content="Quit" Command="{Binding StartupFailedCommand}"/>
+			</Grid>
+		</StackPanel>
+	</Grid>
+</UserControl>

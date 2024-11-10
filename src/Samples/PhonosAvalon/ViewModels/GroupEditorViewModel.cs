@@ -178,6 +178,11 @@ namespace PhonosAvalon.ViewModels
                 return true;
             }
 
+            if (!Players.First().IsRealPlayer)
+            {
+                return true;
+            }
+
             try
             {
                 var zone = _Household.Groups.First(g => _Group.IsThisGroup(g));

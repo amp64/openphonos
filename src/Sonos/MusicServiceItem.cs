@@ -12,7 +12,7 @@ namespace OpenPhonos.Sonos
         internal MusicService Provider { get; }
         internal string SearchItem { get; }
 
-        internal MusicServiceItem(string id, string title, string subtitle, bool playable, bool queueable, bool container, bool canfave, bool alarmable, string metadata, string res, string art, MusicService source)
+        internal MusicServiceItem(string id, string title, string subtitle, bool playable, bool queueable, bool container, bool canfave, bool alarmable, bool expl, string metadata, string res, string art, MusicService source)
         {
             Id = id;
             Title = title;
@@ -22,6 +22,7 @@ namespace OpenPhonos.Sonos
             IsContainer = container;
             IsFavoritable = canfave;
             IsAlarmable = alarmable;
+            IsExplicit = expl;
             Metadata = metadata;
             Res = res;
             ArtUri = art;

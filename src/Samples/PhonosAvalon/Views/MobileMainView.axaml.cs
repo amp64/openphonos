@@ -21,10 +21,7 @@ public partial class MobileMainView : UserControl
     public MobileMainView()
     {
         ImageLoader.AsyncImageLoader.Dispose();
-
-        // Must set a cache path on iOS as CWD is read-only
-        string path = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
-        path = System.IO.Path.Combine(path, "Cache", "Images");
+        string path = System.IO.Path.Combine((App.Current as App).DataFilePath, "Cache", "Images");
         ImageLoader.AsyncImageLoader = new DiskCachedWebImageLoader(path);
 
         OpenPhonos.Sonos.Household.LastDitchDeviceList = new List<string>()

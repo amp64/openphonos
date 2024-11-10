@@ -150,6 +150,8 @@ namespace OpenPhonos.Sonos
         public bool FixedVolume { get; private set; }
         public bool IsMuted { get; private set; }
         public bool IsMissing { get; private set; }
+        public bool IsRealPlayer { get; protected set; }
+
         public Feature3Flags Feature3 { get; }
         public bool HasBattery { get => (Feature3 & Feature3Flags.Battery) != 0; }
 
@@ -167,7 +169,7 @@ namespace OpenPhonos.Sonos
         {
             // The UDN has a "uuid:" prefix which we never need
             var player = new Player(device, device.Attribute("roomName"), device.UDN.Substring(5), invisible: false);
-            await player.InitializeAsync(device.IsRealDevice, true);
+            await player.InitializeAsync(true);
             return player;
         }
 
@@ -234,7 +236,7 @@ namespace OpenPhonos.Sonos
         public static async Task<Player> CreatePlayerAsync(Device device, string roomName, string uniqueName, bool invisible)
         {
             var player = new Player(device, roomName, uniqueName, invisible);
-            await player.InitializeAsync(device.IsRealDevice, false);
+            await player.InitializeAsync(false);
             return player;
         }
 
@@ -663,6 +665,8 @@ namespace OpenPhonos.Sonos
         {
             if (device.IsRealDevice)
             {
+                this.IsRealPlayer = true;
+
                 // Required
                 this.DeviceProperties = new SonosServices.DeviceProperties1(device.FindServiceInfo("urn:schemas-upnp-org:device:ZonePlayer:1", "urn:upnp-org:serviceId:DeviceProperties", throwIfMissing: true));
                 this.ZoneGroupTopology = new SonosServices.ZoneGroupTopology1(device.FindServiceInfo("urn:schemas-upnp-org:device:ZonePlayer:1", "urn:upnp-org:serviceId:ZoneGroupTopology", throwIfMissing: true));
@@ -729,9 +733,9 @@ namespace OpenPhonos.Sonos
             catch { }
         }
 
-        private async Task InitializeAsync(bool realDevice, bool calcInvisible)
+        private async Task InitializeAsync(bool calcInvisible)
         {
-            if (realDevice)
+            if (this.IsRealPlayer)
             {
                 var result = await DeviceProperties.GetZoneInfo();
                 result.ThrowIfFailed();
@@ -955,7 +959,7 @@ namespace OpenPhonos.Sonos
             }
         }
 
-        public static List<string> DecodeStreamInfo(string service, string streamInfo)
+        public static List<string> DecodeStreamInfo(MusicService service, string streamInfo)
         {
             if (string.IsNullOrEmpty(streamInfo) || streamInfo.StartsWith("bd:0"))
                 return null;
@@ -990,20 +994,38 @@ namespace OpenPhonos.Sonos
             if (items.TryGetValue("l", out v))
                 lossless = v == "1";
 
+            bool showbits = true;
+
             if (dolby)
             {
                 result.Add("Dolby Atmos");
             }
-            else if (lossless && service.Contains("Amazon Music"))
+            else if (lossless)
             {
-                if (bd == 16)
-                    result.Add("HD");
-                else if (bd == 24)
-                    result.Add("Ultra HD");
+                string name;
+
+                if (bd == 16 && service != null && service.QualityBadges.TryGetValue("16bit", out name))
+                {
+                    result.Add(name);
+                    showbits = false;
+                }
+                else if (bd == 24 && service != null && service.QualityBadges.TryGetValue("24bit", out name))
+                {
+                    result.Add(name);
+                    showbits = false;
+                }
+                else
+                {
+                    result.Add("Lossless");
+                }
             }
 
             result.Add(sr.ToString() + "kHz");
-            result.Add(bd.ToString() + "-bit");
+
+            if (showbits)
+            {
+                result.Add(bd.ToString() + "-bit");
+            }
 
             return result;
         }

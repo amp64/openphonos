@@ -48,5 +48,11 @@ namespace OpenPhonos.UPnP
         {
             uiAction();
         }
+
+        public bool IsUsableNetwork(NetworkInterface network, out string error)
+        {
+            error = null;
+            return true;
+        }
     }
 }

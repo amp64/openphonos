@@ -772,7 +772,8 @@ namespace PhonosAvalon.ViewModels
                     if (source != null && source.StartsWith("SA_RINCON") && MusicServices != null)
                     {
                         source = MusicServices.GetServiceName(source);
-                        var streaminfo = Player.DecodeStreamInfo(source, track.streamInfo);
+                        var svc = await MusicServices.GetServiceBySnAsync(source);
+                        var streaminfo = Player.DecodeStreamInfo(svc, track.streamInfo);
                         if (streaminfo != null)
                         {
                             source = source + " " + string.Join(" ", streaminfo);
@@ -874,8 +875,26 @@ namespace PhonosAvalon.ViewModels
                 Artist = track.creator;
                 AlbumDescription = string.IsNullOrEmpty(track.album) ? string.Empty : StringResource.Get("NPAlbum");
                 Album = track.album;
-                InfoDescription = source;
-                Info = string.IsNullOrEmpty(source) ? string.Empty : enqueueTransportMd.title;
+
+                if (string.IsNullOrEmpty(source))
+                {
+                    var items = Player.DecodeStreamInfo(null, track.streamInfo);
+                    if (items != null)
+                    {
+                        InfoDescription = string.Join(' ', items);
+                        Info = string.Empty;
+                    }
+                    else
+                    {
+                        InfoDescription = source;
+                        Info = string.Empty;
+                    }
+                }
+                else
+                {
+                    InfoDescription = source;
+                    Info = string.IsNullOrEmpty(source) ? string.Empty : enqueueTransportMd.title;
+                }
             }
             else if (enqueueTransportMd.uclass != null && enqueueTransportMd.uclass.StartsWith("object.item.audioItem.audioBroadcast"))
             {

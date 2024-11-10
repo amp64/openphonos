@@ -12,6 +12,9 @@ using System.Diagnostics;
 using OpenPhonos.UPnP;
 using System.Collections.Generic;
 using System;
+using System.IO;
+using System.Runtime.InteropServices;
+using System.Reflection;
 
 namespace PhonosAvalon;
 
@@ -20,6 +23,12 @@ public partial class App : Application
     public override void Initialize()
     {
         AvaloniaXamlLoader.Load(this);
+
+        // This is where we can store app data
+        string path = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
+        string name = Process.GetCurrentProcess().ProcessName;
+        DataFilePath = System.IO.Path.Combine(path, name);
+        Directory.CreateDirectory(DataFilePath);
     }
 
     public override void OnFrameworkInitializationCompleted()
@@ -34,6 +43,11 @@ public partial class App : Application
         {
             activatableLifetime.Activated += OnActivated;
             activatableLifetime.Deactivated += OnDeactivated;
+        }
+        else if (Platform.Instance is IActivatableLifetimeX activatableLifetimeX)
+        {
+            activatableLifetimeX.Activated += OnActivated;
+            activatableLifetimeX.Deactivated += OnDeactivated;
         }
 
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
@@ -56,6 +70,7 @@ public partial class App : Application
     }
 
     public static ILoggerFactory? AppLoggerFactory { get; private set; }
+    public string DataFilePath { get; set; }
 
     /// <summary>
     /// Implement this if you want to use ApplicationInsights
@@ -94,9 +109,15 @@ public partial class App : Application
         OpenPhonos.UPnP.NetLogger.LoggerFactory = AppLoggerFactory;
         var applog = AppLoggerFactory.CreateLogger("App");
 
-        applog.BeginScope(new Dictionary<string, object> {
-            { "OS", Environment.OSVersion } 
-        });
+        var scope = new Dictionary<string, object> {
+            { "OS", Environment.OSVersion.Platform },
+            { "Version", Assembly.GetExecutingAssembly().GetName().Version },
+#if DEBUG
+            { "Debug", true },
+#endif
+        };
+
+        applog.BeginScope(scope);
 
         applog.LogInformation("Logging initialized");
     }
@@ -156,4 +177,25 @@ public partial class App : Application
 
         (ApplicationLifetime as IClassicDesktopStyleApplicationLifetime)?.Shutdown(0);
     }
+
+    public void TidyExit()
+    {
+        _ = ShutdownAsync();
+    }
+}
+
+// IActivatableLifetime is NotClientImplementable, which is a PITA so lets define a similar subset
+public interface IActivatableLifetimeX
+{
+    //
+    // Summary:
+    //     An event that is raised when the application is Activated for various reasons
+    //     as described by the Avalonia.Controls.ApplicationLifetimes.ActivationKind enumeration.
+    event EventHandler<ActivatedEventArgs>? Activated;
+
+    //
+    // Summary:
+    //     An event that is raised when the application is Deactivated for various reasons
+    //     as described by the Avalonia.Controls.ApplicationLifetimes.ActivationKind enumeration.
+    event EventHandler<ActivatedEventArgs>? Deactivated;
 }
