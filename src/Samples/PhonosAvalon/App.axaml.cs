@@ -73,6 +73,11 @@ public partial class App : Application
     public string DataFilePath { get; set; }
 
     /// <summary>
+    /// This is the version that is displayed to the user. Can be null.
+    /// </summary>
+    public static string DisplayVersion { get; set; }
+
+    /// <summary>
     /// Implement this if you want to use ApplicationInsights
     /// </summary>
     /// <param name="connection"></param>
@@ -108,10 +113,37 @@ public partial class App : Application
 
         OpenPhonos.UPnP.NetLogger.LoggerFactory = AppLoggerFactory;
         var applog = AppLoggerFactory.CreateLogger("App");
+        string os;
+        if (OperatingSystem.IsAndroid())
+        {
+            os = "Android";
+        }
+        else if (OperatingSystem.IsIOS())
+        {
+            os = "iOS";
+        }
+        else if (OperatingSystem.IsWindows())
+        {
+            os = "Windows";
+        }
+        else if (OperatingSystem.IsMacOS())
+        {
+            os = "MacOS";
+        }
+        else if (OperatingSystem.IsLinux())
+        {
+            os = "Linux";
+        }
+        else
+        {
+            os = "Unknown";
+        }
+
+        var ver = App.DisplayVersion ?? Assembly.GetExecutingAssembly().GetName().Version.ToString();
 
         var scope = new Dictionary<string, object> {
-            { "OS", Environment.OSVersion.Platform },
-            { "Version", Assembly.GetExecutingAssembly().GetName().Version },
+            { "OS", os },
+            { "Version", ver },
 #if DEBUG
             { "Debug", true },
 #endif
@@ -175,7 +207,14 @@ public partial class App : Application
             DeinitializeLogging();
         });
 
-        (ApplicationLifetime as IClassicDesktopStyleApplicationLifetime)?.Shutdown(0);
+        if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
+        {
+            desktop.Shutdown(0);
+        }
+        else
+        {
+            Environment.Exit(0);
+        }
     }
 
     public void TidyExit()

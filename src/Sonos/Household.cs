@@ -104,7 +104,10 @@ namespace OpenPhonos.Sonos
                 }
 
                 // We have to set the Listener before we start subscribing to events
-                Listener.Update(null);
+                if (devices.Count != 0)
+                {
+                    Listener.Update(null);
+                }
             }
 
             var finaldevices = new List<Tuple<Device, string>>();

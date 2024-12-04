@@ -9,7 +9,7 @@
 			 x:CompileBindings="True">
 	<UserControl.Styles>
 		<Style Selector="TextBlock">
-			<Setter Property="FontSize" Value="20"/>
+			<Setter Property="FontSize" Value="16"/>
 			<Setter Property="HorizontalAlignment" Value="Center"/>
 		</Style>
 		<Style Selector="Button">
@@ -21,15 +21,17 @@
 	
 	<Grid Margin="20">
 		<StackPanel Orientation="Vertical">
-			<TextBlock Text="Searching for your Sonos devices..."/>
+			<TextBlock Text="{Binding AppName}" TextWrapping="Wrap" FontSize="20" FontWeight="Bold" Margin="0,24,0,12"/>
+			<TextBlock Text="Searching for your Sonos devices..." TextWrapping="Wrap" IsVisible="{Binding !StartupFailed}"/>
 			<ProgressBar IsIndeterminate="True" Margin="0,20,0,20" IsVisible="{Binding StartupSearching}"/>
-			<TextBlock Text="{Binding StartupMessage}" TextWrapping="Wrap" MaxLines="3"/>
+			<TextBlock Text="{Binding StartupMessage}" TextWrapping="Wrap" MaxLines="3" Margin="0,16,0,16"/>
 			<Grid Margin="0,20,0,0" IsVisible="{Binding !StartupSearching}" ColumnDefinitions="*,*,*,*">
-				<Button CommandParameter="R" Grid.Column="0" Content="Retry" Command="{Binding StartupFailedCommand}"/>
-				<Button CommandParameter="H" Grid.Column="1" Content="Help" Command="{Binding StartupFailedCommand}"/>
-				<Button CommandParameter="D" Grid.Column="2" Content="Demo" Command="{Binding StartupFailedCommand}"/>
+				<Button CommandParameter="R" Grid.Column="0" Content="Retry" Command="{Binding StartupFailedCommand}" IsVisible="{Binding !StartupFailed}"/>
+				<Button CommandParameter="H" Grid.Column="1" Content="Help" Command="{Binding StartupFailedCommand}" IsVisible="{Binding !StartupFailed}"/>
+				<Button CommandParameter="D" Grid.Column="2" Content="Demo" Command="{Binding StartupFailedCommand}" IsVisible="{Binding !StartupFailed}"/>
 				<Button CommandParameter="Q" Grid.Column="3" Content="Quit" Command="{Binding StartupFailedCommand}"/>
 			</Grid>
+			<TextBlock Text="{Binding AppVersion}" HorizontalAlignment="Left" FontSize="7"/>
 		</StackPanel>
 	</Grid>
 </UserControl>

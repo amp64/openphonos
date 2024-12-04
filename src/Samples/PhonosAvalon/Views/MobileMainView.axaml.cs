@@ -24,12 +24,20 @@ public partial class MobileMainView : UserControl
         string path = System.IO.Path.Combine((App.Current as App).DataFilePath, "Cache", "Images");
         ImageLoader.AsyncImageLoader = new DiskCachedWebImageLoader(path);
 
-        OpenPhonos.Sonos.Household.LastDitchDeviceList = new List<string>()
-            { "192.168.40.13", "192.168.40.14" };
-
         InitializeComponent();
 
         DialogHost.PopupPositioner = new DialogPopupPositioner();
+    }
+
+    protected override void OnLoaded(RoutedEventArgs e)
+    {
+        if (DataContext is MainViewModel vm)
+        {
+            // Only NOW is it safe to startup the ViewModel
+            _ = vm.StartupAsync();
+        }
+
+        base.OnLoaded(e);
     }
 
     private class DialogPopupPositioner : IDialogPopupPositioner

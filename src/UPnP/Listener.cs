@@ -303,7 +303,7 @@ namespace OpenPhonos.UPnP
         public static async Task<string> EventFailureMessage(Uri player)
         {
             string msg;
-            string name = /*Me != null ? Finder.GetDisplayName(Me, false) :*/ string.Empty;
+            string name = "default";         // should try and get the WiFi name but needs a Host
             bool playerProblem = false;
             if (player != null)
             {
@@ -325,7 +325,7 @@ namespace OpenPhonos.UPnP
                     playerProblem = true;
                 }
             }
-            string badplayer = listenerSocket != null /*&& listenerSocket.Information != null*/ && playerProblem ? string.Format(", or the player at {0} is not responding", player.Host) : string.Empty;
+            string badplayer = listenerSocket != null && playerProblem ? $", or the player at {player.Host} is not responding" : string.Empty;
 
             msg = string.Format(StringResource.Get("Firewall_Blocking"), name);
             msg += badplayer;

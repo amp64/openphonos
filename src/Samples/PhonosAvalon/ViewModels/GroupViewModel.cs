@@ -197,7 +197,11 @@ namespace PhonosAvalon.ViewModels
                 return;
             }
 
-            MusicSource.SourcePlayer = player;
+            if (false)      // TODO figure out how
+            {
+                // If this is the CurrentZone then update the MusicSource (to keep "TV" presence correct)
+                MusicSource.SourcePlayer = player;
+            }
 
             switch (e.PropertyName)
             {

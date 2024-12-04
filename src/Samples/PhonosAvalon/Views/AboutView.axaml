@@ -39,10 +39,14 @@
 			<TextBlock Text="{Binding AppName}" FontSize="24" FontWeight="Bold"/>
 			<TextBlock Text="{Binding AppVersion}" FontSize="14"/>
 			<TextBlock Text="{Binding Copyright}" FontSize="14"/>
-			<TextBlock Text="This is an experimental release - please let us know all of your feedback." Margin="0,12,0,0" FontSize="14"/>
+			<TextBlock Margin="0,12,0,0" FontSize="14">
+				<Run Text="This is an experimental release - please email your feedback to" />
+				<Run Text="{Binding HelpEmailAddress}"/>
+			</TextBlock>
 
 			<TextBlock Text="Known issues" Classes="Heading"/>
 			<TextBlock xml:space="preserve" Classes="List">The Queue page is incomplete.
+Progress bar is not implemented.
 			</TextBlock>
 			<TextBlock Text="History" Classes="Heading"/>
 		</StackPanel>
@@ -50,7 +54,7 @@
 			<Grid>
 			<TextBlock Classes="List" FontWeight="Bold" Text="Version 1.0.1"/>
 			<TextBlock xml:space="preserve" Classes="List">
-Windows: First release.
+Windows/Android: First release.
 			</TextBlock>
 			</Grid>
 		</ScrollViewer>
@@ -63,9 +67,8 @@ Windows: First release.
 				<HyperlinkButton NavigateUri="https://github.com/AvaloniaUtils/DialogHost.Avalonia" Content="DialogHost.Avalonia"/>
 				<HyperlinkButton NavigateUri="https://github.com/davidxuang/FluentIcons" Content="FluentIcons"/>
 			</WrapPanel>
-			<Grid ColumnDefinitions="*,2*,2*,*" Margin="0,12,0,0">
-				<Button Grid.Column="1" Content="Feedback" Command="{Binding FeedbackCommand}"/>
-				<Button Grid.Column="2" Content="OK" Click="OkButton_Click"/>
+			<Grid ColumnDefinitions="*,2*,*" Margin="0,12,0,0">
+				<Button Grid.Column="1" Content="OK" Click="OkButton_Click"/>
 			</Grid>
 		</StackPanel>
 	</Grid>

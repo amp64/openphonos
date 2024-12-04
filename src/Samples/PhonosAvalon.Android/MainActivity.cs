@@ -16,6 +16,9 @@ public class MainActivity : AvaloniaMainActivity<App>
 {
     protected override AppBuilder CustomizeAppBuilder(AppBuilder builder)
     {
+        var context = Application?.ApplicationContext;
+        App.DisplayVersion = context?.PackageManager?.GetPackageInfo(context.PackageName, 0).VersionName;
+
         return base.CustomizeAppBuilder(builder)
             .WithInterFont();
     }

@@ -16,6 +16,7 @@ using Avalonia;
 using Avalonia.Platform;
 using System.Collections.Generic;
 using System.Reflection;
+using Microsoft.Extensions.Logging;
 
 namespace PhonosAvalon.ViewModels;
 
@@ -37,14 +38,14 @@ public partial class MainViewModel : ViewModelBase
         AboutCommand = new ActionCommand((o) => AboutPopupOpen = true);
         FeedbackCommand = new ActionCommand(OnFeedback);
 
-        AppVersion = Assembly.GetExecutingAssembly().GetName().Version.ToString();
+        AppVersion = App.DisplayVersion ?? Assembly.GetExecutingAssembly().GetName().Version.ToString();
         AppName = "Open Phonos";
         Copyright = "Copyright";
         HelpEmailAddress = "openphonos@example.com";
 
         GetAppDetails();
 
-        var later = StartupAsync();
+        // It is critical to call StartupAsync later to get things started
     }
 
     private void OnFeedback(object? obj)
@@ -141,10 +142,20 @@ public partial class MainViewModel : ViewModelBase
     }
 
     private bool _StartupSearching;
+    /// <summary>
+    /// True when actively searching the network
+    /// </summary>
     public bool StartupSearching
     {
         get => _StartupSearching;
         set => SetProperty(ref _StartupSearching, value);
+    }
+
+    private bool _StartupFailed;
+    public bool StartupFailed
+    {
+        get => _StartupFailed;
+        set => SetProperty(ref _StartupFailed, value);
     }
 
     public Household GetHouseholdFromZone(GroupViewModel zone)
@@ -153,7 +164,7 @@ public partial class MainViewModel : ViewModelBase
         return h;
     }
 
-    virtual protected async Task StartupAsync()
+    virtual public async Task StartupAsync()
     {
         if (OpenPhonos.UPnP.Platform.Instance is Platform)
         {
@@ -192,37 +203,51 @@ public partial class MainViewModel : ViewModelBase
         foundSoFar = -1;
         StartupMessage = "Calculating Groups...";
 
-        if (string.IsNullOrEmpty(Settings.Instance.ControllerId))
+        try
         {
-            Settings.Instance.ControllerId = Guid.NewGuid().ToString();
-        }
-
-        foreach (var h in AllHouseholds.Households)
-        {
-            if (h.AssociatedZP != null)
+            if (string.IsNullOrEmpty(Settings.Instance.ControllerId))
             {
-                Debug.WriteLine($"Building HH {h.HouseholdId}");
-
-                await h.BuildGroupsAsync();
-
-                Debug.WriteLine($"Initializing MS via {h.AssociatedZP.DisplayName}");
-                h.MusicServices = new MusicServiceProvider();
-                await h.MusicServices.InitializeAsync(h.AssociatedZP);
-                MusicService.ControllerId = Settings.Instance.ControllerId;
-
-                Debug.WriteLine($"Adding {h.Groups.Count} groups");
-
-                foreach (var g in h.Groups)
-                {
-                    var vm = new GroupViewModel(g, h);
-                    await vm.SubscribeAsync();
-                    ZoneList.Add(vm);
-                }
-
-                h.Groups.CollectionChanged += OnGroupListChanged;
-                await h.SubscribeAsync();
-                await InitMusicServicesAsync(h.AssociatedZP, h.MusicServices);
+                Settings.Instance.ControllerId = Guid.NewGuid().ToString();
             }
+
+            foreach (var h in AllHouseholds.Households)
+            {
+                if (h.AssociatedZP != null)
+                {
+                    NetLogger.WriteLine("Building household");
+
+                    await h.BuildGroupsAsync();
+
+                    NetLogger.WriteLine($"Initializing MS via {h.AssociatedZP.RoomName}");
+                    h.MusicServices = new MusicServiceProvider();
+                    await h.MusicServices.InitializeAsync(h.AssociatedZP);
+                    MusicService.ControllerId = Settings.Instance.ControllerId;
+
+                    NetLogger.WriteLine($"Adding {h.Groups.Count} groups");
+
+                    foreach (var g in h.Groups)
+                    {
+                        var vm = new GroupViewModel(g, h);
+                        NetLogger.WriteLine($"Group Subscribing {vm.Summary}");
+                        await vm.SubscribeAsync();
+                        ZoneList.Add(vm);
+                    }
+
+                    h.Groups.CollectionChanged += OnGroupListChanged;
+                    NetLogger.WriteLine("Household Subscribing");
+                    await h.SubscribeAsync();
+                    await InitMusicServicesAsync(h.AssociatedZP, h.MusicServices);
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            var logger = App.AppLoggerFactory.CreateLogger("App");
+            logger.LogCritical("FindAndConfigure {exception} {stack}", ex.Message, ex.StackTrace);
+
+            StartupSearching = false;
+            StartupMessage = "Internal error: " + ex.Message;
+            return false;
         }
 
         Debug.WriteLine($"All HH done, setting Zone from {ZoneList.Count}");
@@ -311,15 +336,20 @@ public partial class MainViewModel : ViewModelBase
         };
 
         await player.SubscribeToEventsAsync(OpenPhonos.UPnP.Listener.MinimumTimeout, which);
-        await credentialsEvent.WaitAsync(Timeout.Infinite);                                 // TODO should not wait forever
+        bool got = await credentialsEvent.WaitAsync(TimeSpan.FromSeconds(10));
         await player.UnsubscribeToEventsAsync(which);
+        if (!got)
+        {
+            string msg = await Listener.EventFailureMessage(player.ZoneGroupTopology.BaseUri);
+            throw new Exception(msg);
+        }
         await provider.RefreshAsync(credentials);
     }
 
     private void OnStartupFailed(object? arg)
     {
         bool quit = true;
-        StartupPopupOpen = false;
+        bool close = true;
 
         switch (arg as string)
         {
@@ -327,6 +357,8 @@ public partial class MainViewModel : ViewModelBase
                 break;
             case "R":
                 quit = false;
+                close = false;
+                StartupPopupOpen = false;
                 var later = FindAndConfigureAsync();
                 break;
             case "H":
@@ -341,7 +373,10 @@ public partial class MainViewModel : ViewModelBase
                 }
                 catch
                 {
+                    StartupFailed = true;
+                    StartupMessage = $"Email {HelpEmailAddress} for assistance and include diagnostic={NetLogger.ScopeId.Split('-')[0]}";
                     quit = false;
+                    close = false;
                 }
                 break;
             case "D":
@@ -353,6 +388,10 @@ public partial class MainViewModel : ViewModelBase
         if (quit)
         {
             (App.Current as App).TidyExit();
+        }
+        else if (close)
+        {
+            StartupPopupOpen = false;
         }
 
         string HelpBody()
@@ -406,7 +445,7 @@ public class FakeMainViewModel : MainViewModel
     {
     }
 
-    protected override Task StartupAsync()
+    public override Task StartupAsync()
     {
         ZoneList.Add(new FakeGroupViewModel());
 

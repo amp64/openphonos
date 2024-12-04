@@ -3,6 +3,7 @@ using AsyncImageLoader.Loaders;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
+using Avalonia.Interactivity;
 using Avalonia.Media;
 using Avalonia.VisualTree;
 using PhonosAvalon.ViewModels;
@@ -21,6 +22,17 @@ public partial class MainView : UserControl
         InitializeComponent();
 
         ArtPanel.PropertyChanged += ArtPanel_PropertyChanged;
+    }
+
+    protected override void OnLoaded(RoutedEventArgs e)
+    {
+        if (DataContext is MainViewModel vm)
+        {
+            // Only NOW is it safe to startup the ViewModel
+            _ = vm.StartupAsync();
+        }
+
+        base.OnLoaded(e);
     }
 
     private void ArtPanel_PropertyChanged(object? sender, Avalonia.AvaloniaPropertyChangedEventArgs e)
