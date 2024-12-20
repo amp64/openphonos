@@ -6,7 +6,7 @@
     <AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
     <Configurations>Debug;Release;Store Release</Configurations>
     <Platforms>AnyCPU;x64</Platforms>
-    <Version>1.0.1</Version>
+    <Version>1.0.3</Version>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Store Release|AnyCPU'">
     <Optimize>True</Optimize>

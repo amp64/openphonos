@@ -5,6 +5,7 @@ using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Media;
+using Avalonia.Threading;
 using Avalonia.VisualTree;
 using PhonosAvalon.ViewModels;
 using System;
@@ -31,6 +32,16 @@ public partial class MainView : UserControl
             // Only NOW is it safe to startup the ViewModel
             _ = vm.StartupAsync();
         }
+
+        _ = DispatcherTimer.Run(() =>
+        {
+            if (DataContext is MainViewModel vm)
+            {
+                vm.CurrentZone?.NowPlaying?.UpdateProgress();
+            }
+
+            return true;
+        }, TimeSpan.FromSeconds(1));
 
         base.OnLoaded(e);
     }

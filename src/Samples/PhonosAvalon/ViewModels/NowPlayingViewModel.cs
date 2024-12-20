@@ -244,7 +244,7 @@ namespace PhonosAvalon.ViewModels
                     }
                     _Position = value;
                     OnPropertyChanged(nameof(Position));
-                    Debug.WriteLine("Position set to {0} ({1})", _Position, _EditingPosition);
+                    // Debug.WriteLine("Position set to {0} ({1})", _Position, _EditingPosition);
                     if (!EditingPosition)
                     {
                         // TODO var later = SetPositionAsync(value);
@@ -668,6 +668,9 @@ namespace PhonosAvalon.ViewModels
             {
                 CanPrevious = actions.Contains("Previous");
                 CanNext = actions.Contains("Next");
+                CanPlay = actions.Contains("Play");
+                CanPause = actions.Contains("Pause");
+                CanStop = actions.Contains("Stop");
 
                 // this.SeekVisible = this.Actions.Contains("X_DLNA_SeekTime");
             }
@@ -771,15 +774,22 @@ namespace PhonosAvalon.ViewModels
 
                     if (source != null && source.StartsWith("SA_RINCON") && MusicServices != null)
                     {
-                        source = MusicServices.GetServiceName(source);
-                        var svc = await MusicServices.GetServiceBySnAsync(source);
-                        var streaminfo = Player.DecodeStreamInfo(svc, track.streamInfo);
-                        if (streaminfo != null)
+                        var svc = await MusicServices.GetServiceByUdnAsync(source);
+                        if (svc != null)
                         {
-                            source = source + " " + string.Join(" ", streaminfo);
+                            source = svc.DisplayName;
+                            var streaminfo = Player.DecodeStreamInfo(svc, track.streamInfo);
+                            if (streaminfo != null)
+                            {
+                                source = source + " " + string.Join(" ", streaminfo);
 #if DEBUG
-                            source = source + " " + track.streamInfo;
+                                source = source + " " + track.streamInfo;
 #endif
+                            }
+                        }
+                        else
+                        {
+                            source = string.Empty;
                         }
                     }
                     else
@@ -1107,6 +1117,28 @@ namespace PhonosAvalon.ViewModels
         }
 
         #region Commands
+        private bool _CanStop;
+
+        public bool CanStop
+        {
+            get => _CanStop;
+            set => SetProperty(ref _CanStop, value);
+        }
+
+        private bool _CanPlay;
+        public bool CanPlay
+        {
+            get => _CanPlay;
+            set => SetProperty(ref _CanPlay, value);
+        }
+
+        private bool _CanPause;
+        public bool CanPause
+        {
+            get => _CanPause;
+            set => SetProperty(ref _CanPause, value);
+        }
+
         public async Task PlayPauseCommand(string msg)
         {
             if (ActualPlayer == null || ActualPlayer.AVTransport == null)
@@ -1184,6 +1216,80 @@ namespace PhonosAvalon.ViewModels
             }
 
             return model;
+        }
+        #endregion
+
+        #region Position calculations
+
+        // Convert two strings in h:mm:ss format into a percentage float
+        private float CalculateSoFar(string position, string duration)
+        {
+            if ((duration == "0:00:00") || (duration == "NOT_IMPLEMENTED") || (position == "NOT_IMPLEMENTED"))
+            {
+                CurrentTrackLength = 0;
+                return 0;
+            }
+
+            int pos = IntFromTime(position);
+            int len = IntFromTime(duration);
+
+            CurrentTrackLength = len;
+
+            return (float)(100 * pos) / len;
+        }
+
+        private static int IntFromTime(string t)
+        {
+            if (t == "NOT_IMPLEMENTED" || string.IsNullOrEmpty(t))
+                return 0;
+            else
+            {
+                var parts = t.Split(":");
+                return int.Parse(parts[0]) * 3600 + int.Parse(parts[1]) * 60 + int.Parse(parts[2]);
+            }
+        }
+
+        private Task UpdateProgressTask;
+
+        // This should be called once a second to keep the Position updated
+        internal void UpdateProgress()
+        {
+            if (ActualPlayer != null && ActualPlayer.IsRealPlayer)
+            {
+                if (UpdateProgressTask == null || UpdateProgressTask.IsCompleted)
+                {
+                    UpdateProgressTask = UpdateProgressAsync();
+                }
+            }
+        }
+
+        private async Task UpdateProgressAsync()
+        {
+            var posinfo = await ActualPlayer.AVTransport.GetPositionInfo(0);
+            if (posinfo.Error != null)
+                return;
+
+            // We only ever get the time by polling
+            int duration = IntFromTime(posinfo.TrackDuration);
+            if (duration != 0)
+            {
+                if (!EditingPosition)
+                {
+                    Position = CalculateSoFar(posinfo.RelTime, posinfo.TrackDuration);
+                    var where = IntFromTime(posinfo.RelTime);
+                    var remaining = TimeSpan.FromSeconds(duration - where);
+                    this.PositionLeft = string.Format("-{0}:{1:D2}", remaining.Minutes, remaining.Seconds);
+                    var current = TimeSpan.FromSeconds(where);
+                    this.PositionText = string.Format("{0}:{1:D2}", current.Minutes, current.Seconds);
+                }
+            }
+            else
+            {
+                // Must be streaming
+                Position = 0;
+                this.PositionLeft = string.Empty;
+                this.PositionText = string.Empty;
+            }
         }
         #endregion
     }

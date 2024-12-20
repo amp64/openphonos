@@ -466,8 +466,6 @@ namespace OpenPhonos.Sonos
 
         private string ConvertContainerClass(string type, out string prefix, out string resbase)
         {
-            // for Sonos Favorites we likely need correct values here, but for enum it doesnt matter
-            // and for playback, well I guess not...
             string uclass = "object.container.album.musicAlbum";
             resbase = "x-rincon-cpcontainer:";
             int what = 8;
@@ -485,6 +483,7 @@ namespace OpenPhonos.Sonos
                     break;
                 case "playlist":
                     what = 6;
+                    uclass = "object.container.playlistContainer";
                     break;
                 case "favorites":
                     what = 0xA;
@@ -505,13 +504,19 @@ namespace OpenPhonos.Sonos
                 case null:              // TODO figure out real value (Songza root)
                     what = 8;
                     break;
+                case "program":
+                    what = 0xC;
+                    resbase = "x-sonosapi-radio:";
+                    uclass = "object.item.audioItem.audioBroadcast";
+                    break;
                 case "":
+                default:
                     Debug.Assert(false);
                     what = 8;       // TODO better one day?
                     break;
-                    // missing values: 0?,1,2,b
+                    // missing values: 0?,1,2,9,b
             }
-            prefix = what.ToString("d4");
+            prefix = what.ToString("x4");
             return uclass;
         }
 
@@ -558,7 +563,7 @@ namespace OpenPhonos.Sonos
                         string index;
                         string resbase;
                         uclass = ConvertContainerClass(item.itemtype, out index, out resbase);
-                        res = resbase + index + "008c" + id;
+                        res = resbase + index + "008c" + id + "?sid=" + Description.XmlId.ToString() + addserial;       // no flags=8300?
                         me = index + "008c";
                         parentId = "000d0084";
                     }
@@ -750,21 +755,17 @@ namespace OpenPhonos.Sonos
             return data;
         }
 
-        private static string XmlWrap(string name, string value)
+        internal static string XmlWrap(string name, string value)
         {
-            return $"<{name}>{SecurityElement.Escape(value)}</{name}>";
+            if (string.IsNullOrEmpty(value))
+                return string.Empty;
+            else
+                return $"<{name}>{SecurityElement.Escape(value)}</{name}>";
         }
 
         private string StandardMetadata(string id, string parent, string title, string uclass, string idNum, string parentNum, string art)
         {
-            if (art != null)
-            {
-                art = XmlWrap("upnp:albumArtURI", art);
-            }
-            else
-            {
-                art = string.Empty;
-            }
+            art = XmlWrap("upnp:albumArtURI", art);
 
             return $@"<DIDL-Lite 
 xmlns:dc=""http://purl.org/dc/elements/1.1/"" 

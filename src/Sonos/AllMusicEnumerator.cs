@@ -111,12 +111,14 @@ namespace OpenPhonos.Sonos
                     // Need to Add the TV item
                     _All.Insert(_TVLocation, MusicItem.FromTitle(StringResource.Get("MusicTV")));
                     _TVIndex = _TVLocation;
+                    _NextMusicServiceIndex++;
                 }
                 else if (!source.HTCapable && _TVIndex != -1)
                 {
                     // Need to remove the TV item
                     _All.RemoveAt(_TVIndex); 
                     _TVIndex = -1;
+                    _NextMusicServiceIndex--;
                 }
             }
             return changed;

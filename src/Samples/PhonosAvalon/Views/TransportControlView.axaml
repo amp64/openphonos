@@ -53,9 +53,23 @@
 				Command="{Binding PreviousCommand}"
 				IsEnabled="{Binding CanPrevious}"/>
 		<Button Grid.Column="2"
-				Content="{Binding PlayState, Converter={StaticResource PlayStateToSymbolIconConverter}}"
 				Classes="IconStyle"
-				Command="{Binding PlayPauseCommand}"/>
+				Command="{Binding PlayPauseCommand}"
+				>
+			<Button.Content>
+				<MultiBinding Converter="{StaticResource PlayStateToSymbolIconConverter}">
+					<Binding Path="PlayState"/>
+					<Binding Path="CanPause"/>
+					<Binding Path="CanStop"/>
+				</MultiBinding>
+			</Button.Content>
+			<Button.IsEnabled>
+				<MultiBinding Converter="{x:Static BoolConverters.Or}">
+					<Binding Path="CanPlay"/>
+					<Binding Path="CanPause"/>
+				</MultiBinding>
+			</Button.IsEnabled>
+		</Button>
 		<Button Grid.Column="3"
 				Content="{ic:SymbolIcon Symbol=Next}"
 				Classes="IconStyle"

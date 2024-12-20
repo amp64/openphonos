@@ -46,16 +46,24 @@
 
 			<TextBlock Text="Known issues" Classes="Heading"/>
 			<TextBlock xml:space="preserve" Classes="List">The Queue page is incomplete.
-Progress bar is not implemented.
 			</TextBlock>
 			<TextBlock Text="History" Classes="Heading"/>
 		</StackPanel>
 		<ScrollViewer Grid.Row="1">
 			<Grid>
-			<TextBlock Classes="List" FontWeight="Bold" Text="Version 1.0.1"/>
-			<TextBlock xml:space="preserve" Classes="List">
+				<StackPanel>
+					<TextBlock Classes="List" FontWeight="Bold" Text="Version 1.0.3"/>
+					<TextBlock xml:space="preserve" Classes="List">
+Network scan improvement.
+Progress bar functional.
+Fixes to Play/Pause/Stop button.
+Fixes to Favorites, TV and Line-in.
+					</TextBlock>
+					<TextBlock Classes="List" FontWeight="Bold" Text="Version 1.0.1"/>
+					<TextBlock xml:space="preserve" Classes="List">
 Windows/Android: First release.
-			</TextBlock>
+					</TextBlock>
+				</StackPanel>
 			</Grid>
 		</ScrollViewer>
 		<StackPanel Grid.Row="2">

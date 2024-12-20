@@ -9,7 +9,8 @@
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <Configurations>Debug;Release;Store Release</Configurations>
     <Platforms>AnyCPU;x64</Platforms>
-    <AssemblyName>PhonosUltimate</AssemblyName>
+    <AssemblyName>OpenPhonos</AssemblyName>
+	<RuntimeIdentifiers>win-x64</RuntimeIdentifiers>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Store Release|AnyCPU'">
     <Optimize>True</Optimize>

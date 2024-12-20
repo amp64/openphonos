@@ -166,12 +166,23 @@ namespace OpenPhonos.Sonos
             return logo;
         }
 
-#if false
-        internal MusicService GetServiceByUDNAsync(string id)
+        public async Task<MusicService> GetServiceByUdnAsync(string udn)
         {
-            return AvailableServices.FirstOrDefault(s => s.Udn == id);
+            var services = AvailableServices;
+            if (services != null)
+            {
+                var svc = services.FirstOrDefault(s => s.Udn == udn);
+                if (svc != null)
+                {
+                    await svc.InitializeAsync();
+                }
+                return svc;
+            }
+            else
+            {
+                return null;
+            }
         }
-#endif
 
         public string GetServiceName(string udn)
         {
@@ -374,16 +385,13 @@ namespace OpenPhonos.Sonos
             return int.Parse(idstr);
         }
 
+        // The returned service may not be initialized
         internal MusicService GetServiceFromUdnMaybe(string udn)
         {
             var list = AvailableServices;
             if (list != null)
             {
-                var svc = list.FirstOrDefault(s => s.Udn == udn);
-                if (svc != null && svc.IsInitialized)
-                {
-                    return svc;
-                }
+                return list.FirstOrDefault(s => s.Udn == udn);
             }
             return null;
         }

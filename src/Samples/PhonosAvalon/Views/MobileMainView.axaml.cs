@@ -11,6 +11,7 @@ using System.Collections.Generic;
 using Avalonia.Interactivity;
 using DialogHostAvalonia.Positioners;
 using Avalonia;
+using Avalonia.Threading;
 
 namespace PhonosAvalon.Views;
 
@@ -37,7 +38,28 @@ public partial class MobileMainView : UserControl
             _ = vm.StartupAsync();
         }
 
+        Timer = new DispatcherTimer();
+        Timer.Interval = TimeSpan.FromSeconds(1);
+        Timer.Tick += (s, e) =>
+        {
+            if (DataContext is MainViewModel vm)
+            {
+                vm.CurrentZone?.NowPlaying?.UpdateProgress();
+            }
+        };
+        Timer.Start();
+
         base.OnLoaded(e);
+    }
+
+    DispatcherTimer Timer;
+
+    public void ConfigureTimer(bool enable)
+    {
+        if (Timer != null)
+        {
+            Timer.IsEnabled = enable;
+        }
     }
 
     private class DialogPopupPositioner : IDialogPopupPositioner

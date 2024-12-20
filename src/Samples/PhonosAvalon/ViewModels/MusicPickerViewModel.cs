@@ -110,27 +110,27 @@ namespace PhonosAvalon.ViewModels
         private Task _ReadingItemTask;
         private static ReadOnlyObservableCollection<MusicItem> _EmptyItems = new ReadOnlyObservableCollection<MusicItem>(new ObservableCollection<MusicItem>());
 
-        public MusicPickerViewModel(Player p, MusicServiceProvider m)
+        public MusicPickerViewModel(Player p, Household? h)
         {
             _Heading = string.Empty;
             _ItemsStack = new Stack<MusicViewState>();
             _ViewType = "Default";
             _SourcePlayer = p;
-            _PlayerCallbacks = new PlayerCallbacks(() => _SourcePlayer, null);
+            _PlayerCallbacks = new PlayerCallbacks(() => _SourcePlayer, () => h?.AllPlayerList);
             BackCommand = new GoBackCommand(this);
             HomeCommand = new GoHomeCommand(this);
             PlayCommand = new GoPlayCommand(this, PlayType.ReplaceQueue);
             ShuffleCommand = new GoPlayCommand(this, PlayType.ReplaceQueueAndShuffle);
             SearchToggleCommand = new ToggleSearchCommand(this);
             SearchCommand = new GoSearchCommand(this);
-            _ReadingItemTask = StartAsync(RootEnumerator(m), null, false);
+            _ReadingItemTask = StartAsync(RootEnumerator(h?.MusicServices), null, false);
         }
 
         /// <summary>
         /// This is overridable so different roots can use used
         /// </summary>
         /// <returns>The desired root enumerator</returns>
-        protected virtual IMusicItemEnumerator RootEnumerator(MusicServiceProvider m)
+        protected virtual IMusicItemEnumerator RootEnumerator(MusicServiceProvider? m)
         {
             return new AllMusicEnumerator(m);
         }

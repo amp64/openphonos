@@ -5,6 +5,7 @@ using Avalonia.Data.Converters;
 using System;
 using System.Globalization;
 using PhonosAvalon.ViewModels;
+using System.Collections.Generic;
 
 namespace PhonosAvalon.Views
 {
@@ -16,18 +17,30 @@ namespace PhonosAvalon.Views
         }
     }
 
-    public class PlayStateToSymbolIconConverter : IValueConverter
+    public class PlayStateToSymbolIconConverter : IMultiValueConverter
     {
         private SymbolIconConverter Converter = new SymbolIconConverter();
 
-        public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
+        // First binding is PlayState, second binding is CanPause, third is CanStop
+        public object? Convert(IList<object?> values, Type targetType, object? parameter, CultureInfo culture)
         {
-            if (value == null)
+            if (values == null)
             {
                 return new BindingNotification(null);
             }
 
-            var state = (NowPlayingViewModel.PlayStateType)value;
+            if (
+                (values[0] is not NowPlayingViewModel.PlayStateType) ||
+                (values[1] is not bool) ||
+                (values[2] is not bool)
+               )
+            {
+                return BindingOperations.DoNothing;
+            }
+
+            var state = (NowPlayingViewModel.PlayStateType)values[0];
+            bool canPause = (bool)values[1];
+            bool canStop = (bool)values[2];
 
             switch (state)
             {
@@ -38,15 +51,10 @@ namespace PhonosAvalon.Views
                 case NowPlayingViewModel.PlayStateType.PAUSED_PLAYBACK:
                     return Converter.ConvertFrom("Play");
                 case NowPlayingViewModel.PlayStateType.PLAYING:
-                    return Converter.ConvertFrom("Pause");
+                    return Converter.ConvertFrom(canPause || !canStop ? "Pause" : "Stop");
                 default:
                     return new BindingNotification(null);
             }
-        }
-
-        public object? ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
-        {
-            throw new NotImplementedException();
         }
     }
 

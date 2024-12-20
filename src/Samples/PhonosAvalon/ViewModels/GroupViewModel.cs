@@ -65,7 +65,7 @@ namespace PhonosAvalon.ViewModels
             _Queue = new QueueViewModel(this);
             if (!_MusicPickers.TryGetValue(h.MusicServices, out _MusicSource))
             {
-                _MusicSource = new MusicPickerViewModel(group.Coordinator, h.MusicServices);
+                _MusicSource = new MusicPickerViewModel(group.Coordinator, h);
                 _MusicPickers[h.MusicServices] = _MusicSource;
             }
             _NowPlaying.PropertyChanged += (s, e) =>

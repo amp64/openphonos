@@ -174,12 +174,13 @@ namespace OpenPhonos.Sonos
             return tv;
         }
 
-        internal static string RadioMetadata(string id, string parent, string title)
+        internal static string RadioMetadata(string id, string parent, string title, string art)
         {
             return "<DIDL-Lite xmlns:dc=\"http://purl.org/dc/elements/1.1/\" xmlns:upnp=\"urn:schemas-upnp-org:metadata-1-0/upnp/\" xmlns:r=\"urn:schemas-rinconnetworks-com:metadata-1-0/\" xmlns=\"urn:schemas-upnp-org:metadata-1-0/DIDL-Lite/\">" +
                 "<item id=\"" + id.Replace(":", "%3a") + "\" parentID=\"" + parent.Replace(":", "%3a") + "\" restricted=\"true\">" +
                 "<dc:title>" + SecurityElement.Escape(title) + "</dc:title>" +
                 "<upnp:class>object.item.audioItem.audioBroadcast</upnp:class>" +
+                MusicService.XmlWrap("upnp:albumArtURI", art) +
                 "<desc id=\"cdudn\" nameSpace=\"urn:schemas-rinconnetworks-com:metadata-1-0/\">SA_RINCON65031_</desc>" +
                 "</item></DIDL-Lite>";
         }

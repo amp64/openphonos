@@ -47,10 +47,10 @@ namespace OpenPhonos.UPnP
                 try
                 {
                     listenerSocket.Bind(new IPEndPoint(IPAddress.Any, port));
-                    listenerSocket.Listen(0);
+                    listenerSocket.Listen(int.MaxValue);
 
                     var result = listenerSocket.LocalEndPoint as IPEndPoint;
-                    NetLogger.WriteLine($"Listener setup on {Me}:{result.Port}");
+                    NetLogger.WriteLine($"Listener setup on {Me}:{result.Port} {result}");
 
                     ListenAndRespond(listenerSocket);
                     return;
@@ -185,9 +185,15 @@ namespace OpenPhonos.UPnP
 
                 all = Encoding.UTF8.GetString(readBuffer, 0, offset);
             }
-            catch
+            catch (SocketException ex)
             {
                 // Socket was likely closed, ok to stop now
+                NetLogger.WriteLine("Listener socket closed: {0}", ex.Message);
+                return;
+            }
+            catch (Exception ex)
+            {
+                NetLogger.WriteLine("Listener socket failed: {0}", ex.Message);
                 return;
             }
 
@@ -252,7 +258,7 @@ namespace OpenPhonos.UPnP
                 }
                 catch (Exception ex)
                 {
-                    Debug.WriteLine("{0} during listener DispatchEvent", (object)ex.Message);
+                    NetLogger.WriteLine("{0} during listener DispatchEvent", ex.Message);
                 }
             }
 
@@ -719,7 +725,15 @@ namespace OpenPhonos.UPnP
         {
             Debug.WriteLine("Listener.OnResume start");
 
-            CreateListener();
+            // on Android this can get called on Startup, before Me is ever set
+            if (Me != null)
+            {
+                CreateListener();
+            }
+            else
+            {
+                NetLogger.WriteLine("OnResume without Me");
+            }
 
             lock (ListenActions)
             {

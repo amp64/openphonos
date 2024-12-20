@@ -74,6 +74,7 @@ namespace OpenPhonos.Sonos
             IsContainer = element.Name == XName.Get("container", NS);
             IsFavoritable = true;
             IsAlarmable = false;
+            bool cannotPlay = false;
 
             if (Class.StartsWith("object.item.audioItem.audioBroadcast"))
             {
@@ -85,6 +86,7 @@ namespace OpenPhonos.Sonos
                 // Favorites are very different
                 Album = (string)element.Element(XName.Get("description", R));
                 Metadata = element.Element(XName.Get("resMD", R)).Value;
+                string type = (string)element.Element(XName.Get("type", R));
 
                 // Recurse to get "real" MD
                 var innerdidl = Parse(Metadata, null).First();
@@ -94,6 +96,7 @@ namespace OpenPhonos.Sonos
                 IsDeletable = true;
 
                 Subtitle = Album;
+                cannotPlay = type == "shortcut";              // shortcuts cannot be played
             }
             else if (Class == "object.container.playlistContainer")
             {
@@ -110,7 +113,7 @@ namespace OpenPhonos.Sonos
                 Title = StringResource.Get("NPTV");
             }
 
-            IsPlayable = CalcIsPlayable();
+            IsPlayable = CalcIsPlayable() && !cannotPlay;
             IsQueueable = CalcIsQueueable();
             IsFavoritable &= IsQueueable;
         }
@@ -148,6 +151,7 @@ namespace OpenPhonos.Sonos
                 Class == "object.container" ||                                    // any container (eg from Folder view)
                 Class == "object.container.person.musicArtist" ||                 // Artist on Rhapsody
                 Class == "object.container.playlistContainer.sameArtist" ||       // any fake-up "All" album
+                Class.StartsWith("object.container.playlistContainer#") ||        // Music Service playlist
                 (
                     (Class == "object.container.playlistContainer") &&
                     !Id.EndsWith(":TRACKS")
@@ -571,7 +575,7 @@ namespace OpenPhonos.Sonos
 
             enumerator = null;
 
-            if (music.Res == null || !music.Res.StartsWith("x-rincon-cpcontainer:") || music.Metadata == null)
+            if (music.Res == null ||  music.Metadata == null)
             {
                 return false;
             }

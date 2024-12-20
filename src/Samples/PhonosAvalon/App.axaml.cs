@@ -78,6 +78,11 @@ public partial class App : Application
     public static string DisplayVersion { get; set; }
 
     /// <summary>
+    /// This is the version that is displayed to the user. Can be null.
+    /// </summary>
+    public static string OSDisplayVersion { get; set; }
+
+    /// <summary>
     /// Implement this if you want to use ApplicationInsights
     /// </summary>
     /// <param name="connection"></param>
@@ -113,10 +118,13 @@ public partial class App : Application
 
         OpenPhonos.UPnP.NetLogger.LoggerFactory = AppLoggerFactory;
         var applog = AppLoggerFactory.CreateLogger("App");
+        string osver = RuntimeInformation.OSDescription;
         string os;
+
         if (OperatingSystem.IsAndroid())
         {
             os = "Android";
+            osver = os + " " + App.OSDisplayVersion;
         }
         else if (OperatingSystem.IsIOS())
         {
@@ -151,7 +159,7 @@ public partial class App : Application
 
         applog.BeginScope(scope);
 
-        applog.LogInformation("Logging initialized");
+        applog.LogInformation("Logging initialized: {0}", osver);
     }
 
     public static void DeinitializeLogging()
@@ -170,6 +178,7 @@ public partial class App : Application
         if (e.Kind == ActivationKind.Background)
         {
             AppLoggerFactory?.CreateLogger("App").LogInformation("Activated");
+            ConfigMainViewTimer(true);
             Listener.OnResumeAll();
         }
     }
@@ -181,10 +190,23 @@ public partial class App : Application
         if (e.Kind == ActivationKind.Background)
         {
             AppLoggerFactory?.CreateLogger("App").LogInformation("Deactivated");
+            ConfigMainViewTimer(false);
             var later = Listener.OnSuspendAllAsync(() =>
             {
             });
         }
+    }
+
+    private void ConfigMainViewTimer(bool enable)
+    {
+        if (ApplicationLifetime is ISingleViewApplicationLifetime singleViewPlatform)
+        {
+            if (singleViewPlatform.MainView is MobileMainView vm)
+            {
+                vm.ConfigureTimer(enable);
+            }
+        }
+
     }
 
     private bool ShutdownRetry;
