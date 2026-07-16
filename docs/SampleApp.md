@@ -18,7 +18,7 @@ To call this a sample app is somewhat disingenuous, it's a full featured Sonos c
 - Displays content using the layout information provided by the music services, including Hero, List and Grid layouts
 - Queue management: incomplete, but there's a popup window that shows you the queue and lets you change the playing track
 
-Note that my UX skills have never been called great, by anyone, including me. I am a back-end developer, and it shows. However, as my wife is customer #1 for the iOS version I have put some effort into making it not terrible to look at.
+Note that my UX skills have never been called great, by anyone, including me. I am a back-end developer, and it shows. I have put some effort into making it not terrible to look at.
 
 Most of the ViewModels in this sample could likely be ported to other UX frameworks if you like. That's on you though, I am a big fan of Avalonia.
 

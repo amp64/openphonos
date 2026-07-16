@@ -22,7 +22,7 @@ This codebase has been run on many different platforms and UX frameworks. To han
     await finder.ByURNAsync(TestUrn, async (location, network, headers) =>
     {
         // This delegate can be called on any thread, don't block it
-	    var device = await Device.CreateAsync(location);
+        var device = await Device.CreateAsync(location);
         lock (devices)
         {
             Console.WriteLine("Found Device at {0}", location);
@@ -61,7 +61,7 @@ The return value includes an Error property, which is null if the call was succe
 In more recent code I have been using some extension methods, to make it clearer if the call will throw, or not.
 ```csharp
     // assume service is an AVTransport1
-    var info = await service.GetMediaInfo(0).Optional();	      // failure is ok to ignore
+    var info = await service.GetMediaInfo(0).Optional();          // failure is ok to ignore
     var response = await service.Play(0, "1").Required();         // failure is not ok
 ```
 You can see real examples of all of this in the UPnP.Test project.

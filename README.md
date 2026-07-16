@@ -10,7 +10,7 @@ This code uses the UPnP APIs in the speakers, and SMAPI to talk to music service
 
 Almost everything has been reverse engineered: the only official documentation is the [UPnP Specification](https://openconnectivity.org/developer/specifications/upnp-resources/upnp/), and the [Sonos Music API](https://docs.sonos.com/docs/smapi). 
 
-Parts of this code (or its predecessors) have shipped to hundreds of thousands of users over the years, in products known as *Phonos, Phonos Lite, Phonos Universal*, and *Phonos Plus*. (I'm not very good at marketing, or naming apps, or github projects for that matter).
+Parts of this code (or its predecessors) have shipped to hundreds of thousands of users over the years, in products known as *Phonos, Phonos Lite, Phonos Universal*, *Phonos Ultimate* and *Phonos Plus*. (I'm not very good at marketing, or naming apps, or github projects for that matter).
 
 ## How Sonos Works
 There is a reasonable overview of how Sonos works on the [Sonos Developer Portal](https://docs.sonos.com/docs/how-sonos-works). It surprises many to learn that a Sonos app is not a music player - is a remote control. It instructs the Sonos devices to play the music.
@@ -24,7 +24,7 @@ UPnP is the underpinnings for it all. It's the oldest part of the code because, 
 Sonos is the next level up and includes classes to represent the key Sonos objects, such as Zones, Players, Households, Groups, MusicServices and other data sources. It too runs on .NET Standard 2.0.
 
 ## [PhonosAvalonia (in Samples)](./docs/SampleApp.md) 
-This is the included "sample" app that runs on any device that the Avalonia framework supports. It's a full featured Sonos controller, with the ability to play music, control volume, queue actions, group speakers, and browse music service content etc. It runs on .NET8.
+This is the included "sample" app that runs on any device that the Avalonia framework supports. It's a full featured Sonos controller, with the ability to play music, control volume, queue actions, group speakers, and browse music service content etc. It runs on .NET9.
 
 ![PhonosAvalonia Mobile](./docs/images/mobile.png)
 
