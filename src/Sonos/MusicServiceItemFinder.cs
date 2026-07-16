@@ -34,7 +34,7 @@ namespace OpenPhonos.Sonos
 
         public Task<int> CountAsync(PlayerCallbacks callbacks)
         {
-            throw new NotImplementedException();
+            return Task.FromResult(-1);
         }
 
         public void Reset()

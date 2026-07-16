@@ -46,7 +46,7 @@ namespace OpenPhonos.Sonos
 
         public override string ToString()
         {
-            return Coordinator.UniqueName + " " + Summary();
+            return Coordinator.UniqueName + " " + Summary(false);
         }
 
         /// <summary>
@@ -65,16 +65,25 @@ namespace OpenPhonos.Sonos
         }
 
         /// <summary>
-        /// Produces a short summary of the Group, eg "RoomName + 3"
+        /// If all=false, produces a short summary of the Group, eg "RoomName + 3"
+        /// If all=true produces a long list eg "Coord + a + b + c
         /// </summary>
         /// <returns></returns>
-        public string Summary()
+        public string Summary(bool all)
         {
             int count = VisiblePlayers.Count();
             if (count == 1)
+            {
                 return Coordinator.RoomName;
+            }
+            else if (all)
+            {
+                return string.Join(" + ", VisiblePlayers.Select(p => p.RoomName));
+            }
             else
+            {
                 return string.Format("{0} + {1}", Coordinator.RoomName, count - 1);
+            }
         }
 
         internal void AddPlayer(Player player)

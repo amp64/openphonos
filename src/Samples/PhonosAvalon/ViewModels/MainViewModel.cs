@@ -23,13 +23,14 @@ namespace PhonosAvalon.ViewModels;
 public partial class MainViewModel : ViewModelBase
 {
     partial void GetAppDetails();
-    partial void AfterNetworkScan(bool success);
+    partial void BeforeNetworkScan(ref Task? task);
+    partial void AfterNetworkScan(bool success, string type, TimeSpan duration, ref Task? task);
 
     public MainViewModel()
     {
         ArtSize = 200;
 
-        ZoneList = new ObservableCollection<GroupViewModel>();
+        ZoneList = new SortedObservableCollection<GroupViewModel>();
 
         VolumePopupCommand = new ActionCommand((o) => VolumePopupOpen = true);
         GroupEditorCommand = new ActionCommand((o) => GroupEditorOpen = true);
@@ -37,6 +38,10 @@ public partial class MainViewModel : ViewModelBase
         StartupFailedCommand = new ActionCommand(OnStartupFailed);
         AboutCommand = new ActionCommand((o) => AboutPopupOpen = true);
         FeedbackCommand = new ActionCommand(OnFeedback);
+        DevicesPopupCommand = new ActionCommand((o) => DevicesPopupOpen = true);
+        RadioPopupCommand = new ActionCommand((o) => RadioPopupOpen = true);
+        SettingsPopupCommand = new ActionCommand((o) => SettingsPopupOpen = true);
+        Message = new MessageViewModel();
 
         AppVersion = App.DisplayVersion ?? Assembly.GetExecutingAssembly().GetName().Version.ToString();
         AppName = "Open Phonos";
@@ -64,6 +69,72 @@ public partial class MainViewModel : ViewModelBase
         }
     }
 
+    public bool OnBackPressed()
+    {
+        if (CloseAllPopups())
+        {
+        }
+        else if (CurrentZone?.MusicSource != null)
+        {
+            if (CurrentZone.MusicSource.BackCommand.CanExecute(null))
+            {
+                CurrentZone.MusicSource.BackCommand.Execute(null);
+            }
+        }
+        else
+        {
+            return false;
+        }
+
+        return true;
+    }
+
+    internal bool CloseAllPopups()
+    {
+        if (AboutPopupOpen)
+        {
+            AboutPopupOpen = false;
+        }
+        else if (VolumePopupOpen)
+        {
+            VolumePopupOpen = false;
+        }
+        else if (GroupEditorOpen)
+        {
+            GroupEditorOpen = false;
+        }
+        else if (QueuePopupOpen)
+        {
+            QueuePopupOpen = false;
+        }
+        else if (DevicesPopupOpen)
+        {
+            DevicesPopupOpen = false;
+        }
+        else if (MessagePopupOpen)
+        {
+            MessagePopupOpen = false;
+        }
+        else if (RadioPopupOpen)
+        {
+            RadioPopupOpen = false;
+        }
+        else if (SettingsPopupOpen)
+        {
+            SettingsPopupOpen = false;
+        }
+        else if (CurrentZone != null && CurrentZone.PlaylistPopupOpen)
+        {
+            CurrentZone.PlaylistPopupOpen = false;
+        }
+        else
+        {
+            return false;
+        }
+
+        return true;
+    }
+
     private double _ArtSize;
     public double ArtSize
     {
@@ -72,6 +143,7 @@ public partial class MainViewModel : ViewModelBase
     }
 
     private Household.HouseholdResult? AllHouseholds;
+    public IReadOnlyList<Household> GetHouseholds() => AllHouseholds.Households;
 
     public ObservableCollection<GroupViewModel> ZoneList { get; private set; }
 
@@ -86,6 +158,13 @@ public partial class MainViewModel : ViewModelBase
                 Settings.Instance.CurrentZoneId = value?.Coordinator?.UniqueName;
             }
         }
+    }
+
+    private AddRadioViewModel? _RadioViewModel;
+    public AddRadioViewModel? RadioViewModel
+    {
+        get => _RadioViewModel;
+        set => SetProperty(ref _RadioViewModel, value);
     }
 
     public ICommand VolumePopupCommand { get; private set; }
@@ -115,16 +194,51 @@ public partial class MainViewModel : ViewModelBase
         set => SetProperty(ref _QueuePopupOpen, value);
     }
 
+    public ICommand RadioPopupCommand { get; private set; }
+
+    private bool _RadioPopupOpen;
+    public bool RadioPopupOpen
+    {
+        get => _RadioPopupOpen;
+        set => SetProperty(ref _RadioPopupOpen, value);
+    }
+
+    public ICommand DevicesPopupCommand { get; private set; }
+    
+    private bool _DevicesPopupOpen;
+    public bool DevicesPopupOpen
+    {
+        get => _DevicesPopupOpen;
+        set => SetProperty(ref _DevicesPopupOpen, value);
+    }
+
+    private bool _MessagePopupOpen;
+    public bool MessagePopupOpen
+    {
+        get => _MessagePopupOpen;
+        set => SetProperty(ref _MessagePopupOpen, value);
+    }
+
+    public MessageViewModel Message { get; private set; }
+
     public ICommand StartupFailedCommand { get; private set; }
 
     public ICommand AboutCommand { get; private set; }
     public ICommand FeedbackCommand { get; private set; }
+    public ICommand SettingsPopupCommand { get; private set; }
 
     private bool _AboutPopupOpen;
     public bool AboutPopupOpen
     {
         get => _AboutPopupOpen;
         set => SetProperty(ref _AboutPopupOpen, value);
+    }
+
+    private bool _SettingsPopupOpen;
+    public bool SettingsPopupOpen
+    {
+        get => _SettingsPopupOpen;
+        set => SetProperty(ref _SettingsPopupOpen, value);
     }
 
     private bool _StartupPopupOpen;
@@ -158,6 +272,33 @@ public partial class MainViewModel : ViewModelBase
         set => SetProperty(ref _StartupFailed, value);
     }
 
+    public int Theme
+    {
+        get => Settings.Instance.Theme;
+        set
+        {
+            int t = Settings.Instance.Theme;
+            if (SetProperty(ref t, value))
+            {
+                Settings.Instance.Theme = value;
+                (App.Current as App).UpdateTheme();
+            }
+        }
+    }
+
+    private bool _large;
+    public bool LargeIcons
+    {
+        get => _large;
+        set
+        {
+            if (SetProperty(ref _large, value))
+            {
+                (App.Current as App).UpdateLargeIcons(value);
+            }
+        }
+    }
+
     public Household GetHouseholdFromZone(GroupViewModel zone)
     {
         var h = AllHouseholds.Households.FirstOrDefault(h => h.Groups.FirstOrDefault(g => zone.IsThisGroup(g)) != null);
@@ -181,85 +322,135 @@ public partial class MainViewModel : ViewModelBase
 
     private async Task<bool> FindAndConfigureAsync()
     {
+        Task? before = null;
+        BeforeNetworkScan(ref before);
+        if (before !=null)
+        {
+            await before; 
+        }
+
         StartupPopupOpen = true;
         StartupSearching = true;
         int foundSoFar = 0;
 
-        AllHouseholds = await Household.FindAllHouseholdsAndPlayersAsync((player, other) =>
-        {
-            // Status update here as players are found
-            foundSoFar++;
-            string msg = $"Found: {foundSoFar}...";
-            Dispatcher.UIThread.Post(() =>
-            {
-                if (foundSoFar > 0)
-                {
-                    // Don't update this if we have already exited the FindAllHouseholdsAndPlayersAsync
-                    StartupMessage = msg;
-                }
-            });
-        });
+        string [] hosts = (Settings.Instance.Hosts ?? string.Empty).Split(',');
+        bool faster = hosts[0].Length != 0;
+        var stopWatch = Stopwatch.StartNew();
 
-        foundSoFar = -1;
+        if (faster)
+        {
+            NetLogger.WriteLine("Trying HHosts: {0}", Settings.Instance.Hosts);
+
+            StartupMessage = "Accelerated network scan...";
+            AllHouseholds = await Household.FindHouseholdFromPlayers(hosts);
+            if (AllHouseholds == null)
+            {
+                faster = false;
+            }
+        }
+
+        if (!faster)
+        {
+            Settings.Instance.Hosts = string.Empty;
+            AllHouseholds = await Household.FindAllHouseholdsAndPlayersAsync((player, other) =>
+            {
+                // Status update here as players are found
+                foundSoFar++;
+                string msg = $"Found: {foundSoFar}...";
+                Dispatcher.UIThread.Post(() =>
+                {
+                    if (foundSoFar > 0)
+                    {
+                        // Don't update this if we have already exited the FindAllHouseholdsAndPlayersAsync
+                        StartupMessage = msg;
+                    }
+                });
+            });
+        }
+
         StartupMessage = "Calculating Groups...";
+        foundSoFar = -1;
+        var logger = App.AppLoggerFactory!.CreateLogger("App");
+
+        if (string.IsNullOrEmpty(Settings.Instance.ControllerId))
+        {
+            Settings.Instance.ControllerId = Guid.NewGuid().ToString();
+        }
+        MusicService.ControllerId = Settings.Instance.ControllerId;
+
+        var htasks = new List<Task>();
+        int hhIndex = 0;
+
+        foreach (var h in AllHouseholds.Households)
+        {
+            var htask = BuildHouseholdAsync(hhIndex++, h, faster);
+            htasks.Add(htask);
+        }
 
         try
         {
-            if (string.IsNullOrEmpty(Settings.Instance.ControllerId))
-            {
-                Settings.Instance.ControllerId = Guid.NewGuid().ToString();
-            }
-
-            foreach (var h in AllHouseholds.Households)
-            {
-                if (h.AssociatedZP != null)
-                {
-                    NetLogger.WriteLine("Building household");
-
-                    await h.BuildGroupsAsync();
-
-                    NetLogger.WriteLine($"Initializing MS via {h.AssociatedZP.RoomName}");
-                    h.MusicServices = new MusicServiceProvider();
-                    await h.MusicServices.InitializeAsync(h.AssociatedZP);
-                    MusicService.ControllerId = Settings.Instance.ControllerId;
-
-                    NetLogger.WriteLine($"Adding {h.Groups.Count} groups");
-
-                    foreach (var g in h.Groups)
-                    {
-                        var vm = new GroupViewModel(g, h);
-                        NetLogger.WriteLine($"Group Subscribing {vm.Summary}");
-                        await vm.SubscribeAsync();
-                        ZoneList.Add(vm);
-                    }
-
-                    h.Groups.CollectionChanged += OnGroupListChanged;
-                    NetLogger.WriteLine("Household Subscribing");
-                    await h.SubscribeAsync();
-                    await InitMusicServicesAsync(h.AssociatedZP, h.MusicServices);
-                }
-            }
+            await Task.WhenAll(htasks);
         }
         catch (Exception ex)
         {
-            var logger = App.AppLoggerFactory.CreateLogger("App");
-            logger.LogCritical("FindAndConfigure {exception} {stack}", ex.Message, ex.StackTrace);
-
-            StartupSearching = false;
-            StartupMessage = "Internal error: " + ex.Message;
-            return false;
+            logger.LogCritical("BuildHouseholdAsync2 {exception}", ex.Message);
+            NetLogger.LikelyProblem = ex.Message;
         }
 
         Debug.WriteLine($"All HH done, setting Zone from {ZoneList.Count}");
         StartupSearching = false;
+        stopWatch.Stop();
 
-        AfterNetworkScan(ZoneList.Count > 0);
+        Task? work = null;
+        AfterNetworkScan(ZoneList.Count > 0, faster ? "fast" : "normal", stopWatch.Elapsed, ref work);
+        if (work != null)
+        {
+            await work;
+        }
 
         if (ZoneList.Count > 0)
         {
             StartupPopupOpen = false;
             var z = ZoneList.FirstOrDefault(z => z.Coordinator?.UniqueName == Settings.Instance.CurrentZoneId);
             CurrentZone = z ?? ZoneList[0];
+
+            if (AllHouseholds.CacheResults)
+            {
+                var updatedHosts = AllHouseholds.Households.Select(hh => hh.AssociatedZP.IPAddress);
+                Settings.Instance.Hosts = string.Join(',', updatedHosts);
+                NetLogger.WriteLine("Saving hosts: {0}", Settings.Instance.Hosts);
+            }
+            else
+            {
+                NetLogger.WriteLine("Clearing hosts");
+                Settings.Instance.Hosts = string.Empty;
+            }
+
+            if (faster)
+            {
+                // Do the current zone first as its the one on screen when we start
+                NetLogger.WriteLine($"Group Subscribing {CurrentZone.Summary}");
+                var first = CurrentZone;
+
+                // This kicks off the AVT subscription, which we need to populate the main screen
+                var refill = first.NowPlaying;
+                await first.SubscribeAsync();
+
+                // Do the other Group subscriptions on other another thread else it severely slows down startup
+                var vms = ZoneList.ToList();
+                vms.Remove(first);
+
+                var later = Task.Run(async () =>
+                {
+                    // Give the main Zone a chance
+                    await Task.Delay(500);
+                    foreach (var vm in vms)
+                    {
+                        NetLogger.WriteLine($"Group Subscribing {vm.Summary} ({Environment.CurrentManagedThreadId})");
+                        await vm.SubscribeAsync();
+                    }
+                });
+            }
 
             string? previousVersion = Settings.Instance.LastVersion;
             if (previousVersion != AppVersion)
@@ -273,9 +464,66 @@ public partial class MainViewModel : ViewModelBase
         else
         {
             StartupMessage = "No devices found. " + NetLogger.LikelyProblem ?? string.Empty;
-            NetLogger.WriteLine("BAD: No zones found");
+            NetLogger.WriteLine("BAD: No zones found, clearing hosts");
+            Settings.Instance.Hosts = string.Empty;
+
             return false;
         }
+    }
+
+    private async Task BuildHouseholdAsync(int hhIndex, Household h, bool faster)
+    {
+        if (h.AssociatedZP != null)
+        {
+            NetLogger.WriteLine($"Building household #{hhIndex}");
+
+            await h.BuildGroupsAsync();
+
+            NetLogger.WriteLine($"Initializing MS via {h.AssociatedZP.RoomName}");
+            h.MusicServices = new MusicServiceProvider();
+            try
+            {
+                await h.MusicServices.InitializeAsync(h.AssociatedZP);
+            }
+            catch (Exception ex)
+            {
+                NetLogger.WriteLine($"BuildHousehold problem: {ex.Message}");
+            }
+
+            NetLogger.WriteLine($"Adding {h.Groups.Count} groups");
+            var vms = new List<GroupViewModel>();
+
+            foreach (var g in h.Groups)
+            {
+                var vm = new GroupViewModel(g, h, hhIndex);
+                if (!faster)
+                {
+                    NetLogger.WriteLine($"Group Subscribing {vm.Summary}");
+                    var later = vm.SubscribeAsync();
+                }
+                vms.Add(vm);
+            }
+
+            h.Groups.CollectionChanged += OnGroupListChanged;
+            h.NotifyHousehold += Household_Notify;
+
+            NetLogger.WriteLine($"Household #{hhIndex} Subscribing");
+            await h.SubscribeAsync();
+            await InitMusicServicesAsync(h.AssociatedZP, h.MusicServices);
+
+            // Now it is ok to add to the ZoneList
+            foreach(var vm in vms)
+            {
+                ZoneList.Add(vm);
+            }
+
+            NetLogger.WriteLine($"Building household #{hhIndex} done");
+        }
+    }
+
+    private void Household_Notify(object sender, Household.HouseholdEventArgs args)
+    {
+        OnHouseholdNotify.Invoke(sender, args);
     }
 
     private async void OnGroupListChanged(object? sender, NotifyCollectionChangedEventArgs e)
@@ -289,7 +537,7 @@ public partial class MainViewModel : ViewModelBase
             foreach (var item in e.NewItems)
             {
                 var g = item as Group;
-                var vm = new GroupViewModel(g, h);
+                var vm = new GroupViewModel(g, h, GetIndex(h));
                 await vm.SubscribeAsync();
                 ZoneList.Add(vm);
             }
@@ -316,6 +564,30 @@ public partial class MainViewModel : ViewModelBase
         else
         {
             int x = 4;
+        }
+    }
+
+    private int GetIndex(Household h)
+    {
+        int i = 0;
+        foreach(var hh in AllHouseholds.Households)
+        {
+            if (hh == h)
+            {
+                break;
+            }
+            i++;
+        }
+        return i;
+    }
+
+    private HardwareItem _HouseholdDisplayList;
+    internal HardwareItem HouseholdDisplayList
+    {
+        get => _HouseholdDisplayList;
+        set
+        {
+            SetProperty(ref _HouseholdDisplayList, value);
         }
     }
 
@@ -359,6 +631,7 @@ public partial class MainViewModel : ViewModelBase
                 quit = false;
                 close = false;
                 StartupPopupOpen = false;
+                StartupMessage = string.Empty;
                 var later = FindAndConfigureAsync();
                 break;
             case "H":
@@ -374,7 +647,7 @@ public partial class MainViewModel : ViewModelBase
                 catch
                 {
                     StartupFailed = true;
-                    StartupMessage = $"Email {HelpEmailAddress} for assistance and include diagnostic={NetLogger.ScopeId.Split('-')[0]}";
+                    StartupMessage = $"Email {HelpEmailAddress} for assistance and include diagnostic={App.SessionId}";
                     quit = false;
                     close = false;
                 }
@@ -400,7 +673,7 @@ public partial class MainViewModel : ViewModelBase
             {
                 "Version: " + AppVersion,
                 "Platform: " + OpenPhonos.UPnP.Platform.Instance.FullPlatformName(),
-                "Diagnostic: " + NetLogger.ScopeId,
+                "Diagnostic: " + App.SessionId,
                 NetLogger.LikelyProblem ?? string.Empty,
             };
 
@@ -412,6 +685,8 @@ public partial class MainViewModel : ViewModelBase
     public string AppName { get; private set; }
     public string Copyright { get; private set; }
     public string HelpEmailAddress { get; private set; }
+    public string DiagnosticCode { get => App.SessionId; }
+    public Action<object, Household.HouseholdEventArgs> OnHouseholdNotify { get; internal set; }
 
     private async Task CreateDemoSystemAsync()
     {
@@ -430,7 +705,7 @@ public partial class MainViewModel : ViewModelBase
 
         foreach (var g in household.Groups)
         {
-            var gvm = new GroupViewModel(g, household);
+            var gvm = new GroupViewModel(g, household, 0);
             ZoneList.Add(gvm);
             gvm.FillWithFakes();
         }
@@ -474,5 +749,18 @@ internal class ActionCommand : ICommand
     public void Execute(object? parameter)
     {
         Action.Invoke(parameter);
+    }
+}
+
+public class SortedObservableCollection<T> : ObservableCollection<T> where T : IComparable<T>
+{
+    protected override void InsertItem(int index, T item)
+    {
+        int sortedIndex = 0;
+        while (sortedIndex < this.Count && this[sortedIndex].CompareTo(item) < 0)
+        {
+            sortedIndex++;
+        }
+        base.InsertItem(sortedIndex, item);
     }
 }

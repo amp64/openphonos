@@ -43,8 +43,32 @@ namespace PhonosAvalon.ViewModels
             private set;
         }
 
+        private bool _AlphaJumpVisible;
+        public bool AlphaJumpVisible { get => _AlphaJumpVisible; set => SetProperty(ref _AlphaJumpVisible, value); }
+
+        private AlphaJumpViewModel? _AlphaJumpData;
+        public AlphaJumpViewModel? AlphaJumpData
+        {
+            get => _AlphaJumpData;
+            private set
+            {
+                SetProperty(ref _AlphaJumpData, value);
+                AlphaJumpVisible = value != null;
+            }
+        }
+
         private bool _SearchControlVisible;
-        public bool SearchControlVisible { get => _SearchControlVisible; set => SetProperty(ref _SearchControlVisible, value); }
+        public bool SearchControlVisible
+        {
+            get => _SearchControlVisible;
+            set
+            {
+                if (SetProperty(ref _SearchControlVisible, value))
+                {
+                    AlphaJumpVisible = false;
+                }
+            }
+        }
 
         private bool _CanSearch;
         public bool CanSearch { get => _CanSearch; set => SetProperty(ref _CanSearch, value); }
@@ -92,12 +116,18 @@ namespace PhonosAvalon.ViewModels
             }
         }
 
+        public PlaylistViewModel Playlists { get; }
+
         public GoBackCommand BackCommand { get; private set; }
         public GoHomeCommand HomeCommand { get; private set; }
         public GoPlayCommand PlayCommand { get; private set; }
         public GoPlayCommand ShuffleCommand { get; private set; }
         public ToggleSearchCommand SearchToggleCommand { get; private set; }
         public GoSearchCommand SearchCommand { get; private set; }
+
+        public GoJumpCommand JumpCommand { get; private set; }
+
+        public Action<int>? OnMusicListJump { get; set; }
 
         private MusicItemReader _MusicReader;
         private string _Heading;
@@ -124,6 +154,7 @@ namespace PhonosAvalon.ViewModels
             SearchToggleCommand = new ToggleSearchCommand(this);
             SearchCommand = new GoSearchCommand(this);
             _ReadingItemTask = StartAsync(RootEnumerator(h?.MusicServices), null, false);
+            Playlists = new PlaylistViewModel(_PlayerCallbacks);
         }
 
         /// <summary>
@@ -135,28 +166,42 @@ namespace PhonosAvalon.ViewModels
             return new AllMusicEnumerator(m);
         }
 
+        private const int CountForAlphaJumpList = 100;
+
         private async Task StartAsync(IMusicItemEnumerator music, MusicViewState? state, bool resuming)
         {
-            // Clear the UX
-            SetItems(_EmptyItems);
+            AlphaJumpData = null;
 
-            // Stop reading the current data
-            if (_MusicReader != null)
-            {
-                _MusicReader.Pause();
-
-                // And wait for it to actually stop
-                await _ReadingItemTask;
-            }
+            await ClearAndStopReadingAsync();
 
             if (resuming)
             {
                 _MusicReader = state.Source;
+                AlphaJumpData = state.AlphaJump;
             }
             else
             {
                 // Setup the new data source
                 _MusicReader = new MusicItemReader(music, _SourcePlayer, _PlayerCallbacks);
+                int count = await music.CountAsync(_PlayerCallbacks);
+                if (count > CountForAlphaJumpList)
+                {
+                    if (music is IMusicEnumeratorAttributes a && a.CanAlphaJump)
+                    {
+                        AlphaJumpData = new AlphaJumpViewModel();
+                        _MusicReader.OnItemAdded += (newItem, index) =>
+                        {
+                            if (AlphaJumpData != null)
+                            {
+                                AlphaJumpData.TryAddToIndex(newItem.Title, index);
+                            }
+                        };
+                        AlphaJumpData.OnJump += (where) =>
+                        {
+                            OnMusicListJump?.Invoke(where);
+                        };
+                    }
+                }
             }
 
             SetItems(_MusicReader.Items);
@@ -177,6 +222,31 @@ namespace PhonosAvalon.ViewModels
 
             Heading = music.DisplayName;
 
+            RefreshContent(music, resuming);
+
+            if (state != null && state.Control != null)
+            {
+                state.Control.Scroll.Offset = new Avalonia.Vector(0, state.YPos);
+            }
+        }
+
+        private async Task ClearAndStopReadingAsync()
+        {
+            // Clear the UX
+            SetItems(_EmptyItems);
+
+            // Stop reading the current data
+            if (_MusicReader != null)
+            {
+                _MusicReader.Pause();
+
+                // And wait for it to actually stop
+                await _ReadingItemTask;
+            }
+        }
+
+        private void RefreshContent(IMusicItemEnumerator music, bool resuming)
+        {
             // Start reading the new data
             Busy = true;
 
@@ -197,11 +267,6 @@ namespace PhonosAvalon.ViewModels
                         ViewType = "Default";               // so that errors don't show up in Grid form
                     }
                 });
-
-            if (state != null && state.Control != null)
-            {
-                state.Control.Scroll.Offset = new Avalonia.Vector(0, state.YPos);
-            }
         }
 
         private void SetItems(ReadOnlyObservableCollection<MusicItem> items)
@@ -231,7 +296,7 @@ namespace PhonosAvalon.ViewModels
 
                 if (next != null)
                 {
-                    _ItemsStack.Push(new MusicViewState(_MusicReader, listbox, listbox.Scroll.Offset.Y, ParentItem));
+                    _ItemsStack.Push(new MusicViewState(_MusicReader, listbox, listbox.Scroll.Offset.Y, ParentItem, AlphaJumpData));
                     BackCommand.ExecuteHasChanged();
                     HomeCommand.ExecuteHasChanged();
                     ParentItem = new MusicItemWithStrings(item);
@@ -249,7 +314,7 @@ namespace PhonosAvalon.ViewModels
             var finder = _MusicReader.MusicEnumerator as IMusicItemSearchable;
             var next = finder.GetSearchEnumerator(what);
 
-            _ItemsStack.Push(new MusicViewState(_MusicReader, null, 0, ParentItem));
+            _ItemsStack.Push(new MusicViewState(_MusicReader, null, 0, ParentItem, null));
             BackCommand.ExecuteHasChanged();
             HomeCommand.ExecuteHasChanged();
             ParentItem = null;
@@ -309,13 +374,15 @@ namespace PhonosAvalon.ViewModels
             public ListBox? Control;
             public double YPos;
             public MusicItemWithStrings SourceItem;
-        
-            public MusicViewState(MusicItemReader source, ListBox? control, double ypos, MusicItemWithStrings display)
+            public AlphaJumpViewModel? AlphaJump;
+
+            public MusicViewState(MusicItemReader source, ListBox? control, double ypos, MusicItemWithStrings display, AlphaJumpViewModel? alpha)
             {
                 Source = source;
                 Control = control;
                 YPos = ypos;
                 SourceItem = display;
+                AlphaJump = alpha;
             }
         }
 
@@ -365,6 +432,24 @@ namespace PhonosAvalon.ViewModels
             public void Execute(object? parameter)
             {
                 _Parent.DoSearch(parameter as string);
+            }
+        }
+
+        public class GoJumpCommand : ICommand
+        {
+            public event EventHandler? CanExecuteChanged;
+
+            private readonly MusicPickerViewModel _Parent;
+
+            public bool CanExecute(object? parameter)
+            {
+                string item = parameter as string ?? string.Empty;
+                return true; // _Parent.HasItemsStartingWith(item[0]);
+            }
+
+            public void Execute(object? parameter)
+            {
+                throw new NotImplementedException();
             }
         }
 
@@ -418,6 +503,19 @@ namespace PhonosAvalon.ViewModels
         {
             var later = SourcePlayer.PlayItemAsync(musicItem, action);
             // TODO report errors?
+        }
+
+        internal void ContentChanged(object sender, Player.ContentChangedEventArgs e)
+        {
+            if (sender == SourcePlayer && this._MusicReader.MusicEnumerator is IMusicEnumeratorAttributes m && m.NeedsUpdate(e))
+            {
+                RefillAsync().Later();
+            }
+        }
+
+        private async Task RefillAsync()
+        {
+            await StartAsync(_MusicReader.MusicEnumerator, null, false);
         }
 
         public class GoHomeCommand : ICommand

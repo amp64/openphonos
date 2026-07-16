@@ -1,0 +1,81 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:asyncImageLoader="clr-namespace:AsyncImageLoader;assembly=AsyncImageLoader.Avalonia"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+             x:Class="PhonosAvalon.Views.DeviceView"
+			 xmlns:vm="clr-namespace:PhonosAvalon.ViewModels"
+			 xmlns:v="clr-namespace:PhonosAvalon.Views"
+			 x:DataType="vm:MainViewModel">
+	<UserControl.Styles>
+		<Style Selector="TextBlock.Item">
+			<Setter Property="FontSize" Value="12"/>
+		</Style>
+		<Style Selector="ListBoxItem">
+			<Setter Property="Padding" Value="0"/>
+		</Style>
+	</UserControl.Styles>
+	<UserControl.Resources>
+		<ResourceDictionary>
+			<v:SymbolConverter x:Key="SymbolConverter"/>
+		</ResourceDictionary>
+	</UserControl.Resources>
+	
+	<Grid RowDefinitions="Auto,*,Auto">
+		<TextBlock Text="{Binding HouseholdDisplayList.DisplayName}" FontWeight="Bold" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+		<Button Classes="CloseButton" Click="OkButton_Click" HorizontalAlignment="Left"/>
+		<TreeView Grid.Row="1" x:Name="HardwareTree" ItemsSource="{Binding HouseholdDisplayList.Children}">
+			<ScrollViewer.HorizontalScrollBarVisibility>Disabled</ScrollViewer.HorizontalScrollBarVisibility>
+			<ScrollViewer.BringIntoViewOnFocusChange>False</ScrollViewer.BringIntoViewOnFocusChange>
+			<TreeView.Styles>
+				<Style Selector="TreeViewItem" x:DataType="vm:HardwareItem">
+					<Setter Property="IsExpanded" Value="{Binding DefaultExpand}"/>
+				</Style>
+			</TreeView.Styles>
+			<TreeView.ItemTemplate>
+				<TreeDataTemplate ItemsSource="{Binding Children}">
+					<Grid ColumnDefinitions="Auto,Auto,*">
+						<Grid MaxWidth="24" Height="24" Margin="0,0,8,0" 
+								IsVisible="{Binding Symbol, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
+							<ContentControl Content="{Binding Symbol, Converter={StaticResource SymbolConverter}}"/>
+						</Grid>
+						<Image MaxWidth="24" Height="24" Margin="0,0,8,0" 
+								IsVisible="{Binding Icon, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
+								asyncImageLoader:ImageLoader.Source="{Binding Icon}"/>
+						<TextBlock Grid.Column="1" Margin="0" IsVisible="{Binding Problem, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
+								Foreground="Red" Text="! " VerticalAlignment="Center"
+								FontWeight="Bold"
+								 />
+						<TextBlock Grid.Column="2" VerticalAlignment="Center" IsVisible="{Binding FriendlyModelName, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
+							<Run Text="{Binding DisplayName}" FontWeight="Bold"/>
+							<Run Text="{Binding FriendlyModelName}" FontSize="10"/>
+						</TextBlock>
+						<TextBlock Grid.Column="2" VerticalAlignment="Center" IsVisible="{Binding FriendlyModelName, Converter={x:Static StringConverters.IsNullOrEmpty}}">
+							<Run Text="{Binding DisplayName}"/>
+						</TextBlock>
+					</Grid>
+				</TreeDataTemplate>
+			</TreeView.ItemTemplate>
+		</TreeView>
+		<Grid Grid.Row="2" Margin="0,0,8,0" RowDefinitions="16,*"
+			MinHeight="164"
+			DataContext="{Binding ((vm:HardwareItem)SelectedItem), ElementName=HardwareTree}"
+			>
+			<Rectangle Fill="DarkGray" Height="2" HorizontalAlignment="Stretch" VerticalAlignment="Center"/>
+			<StackPanel Grid.Row="1" Margin="0,0,8,0">
+				<TextBlock Text="{Binding DisplayName}" FontWeight="Bold" IsVisible="{Binding Data, Converter={x:Static ObjectConverters.IsNotNull}}"/>
+				<ListBox ItemsSource="{Binding Data}">
+					<ListBox.ItemTemplate>
+						<DataTemplate>
+							<Grid ColumnDefinitions="*,2*">
+								<TextBlock Classes="Item" Grid.Column="0" Text="{Binding Key}"/>
+								<TextBlock Classes="Item" Grid.Column="1" Text="{Binding Value}" TextWrapping="Wrap"/>
+							</Grid>
+						</DataTemplate>
+					</ListBox.ItemTemplate>
+				</ListBox>
+			</StackPanel>
+		</Grid>
+	</Grid>
+</UserControl>

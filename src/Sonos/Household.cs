@@ -22,14 +22,69 @@ namespace OpenPhonos.Sonos
         public class HouseholdResult
         {
             public readonly IReadOnlyList<Household> Households;
-            public readonly string DiagnosticLog;
             public readonly string FailureReason;
+            public readonly bool CacheResults;
 
-            internal HouseholdResult(List<Household> households, string log, string reason)
+            internal HouseholdResult(List<Household> households, string reason, bool cache)
             {
                 Households = households;
-                DiagnosticLog = log;
                 FailureReason = reason;
+                CacheResults = cache;
+            }
+        }
+
+        // Given the IP address of devices, build a Household from each, or null if cannot
+        public static async Task<HouseholdResult> FindHouseholdFromPlayers(IList<string> hosts, Action<Player, string> OnNewPlayer = null)
+        {
+            var households = new List<Household>();
+            bool nocache = false;
+
+            foreach (var host in hosts)
+            {
+                NetLogger.WriteLine("Trying specific household from: {0}", host);
+
+                var newdevice = await Device.CreateAsync($"http://{host}:1400/xml/device_description.xml");
+                if (newdevice.IsMissing)
+                    continue;
+
+                var svcinfo = newdevice.FindServiceInfo("urn:schemas-upnp-org:device:ZonePlayer:1", "urn:upnp-org:serviceId:DeviceProperties", false);
+                if (svcinfo == null)
+                    continue;
+
+                var devinfo = new DeviceProperties1(svcinfo);
+                var hh = await devinfo.GetHouseholdID();
+                if (hh.Error is UPnPForbiddenException)
+                {
+                    NetLogger.LikelyProblem = hh.Error.Message;
+                    nocache = true;
+                    continue;
+                }
+                if (hh.Error != null || hh.CurrentHouseholdID == string.Empty)
+                    continue;
+
+                string hhid = hh.CurrentHouseholdID;
+                if (households.Any(t => t.HouseholdId == hhid))
+                    continue;
+
+                var h = new Household(hhid);
+                households.Add(h);
+                var devlist = new List<Tuple<Device, string>>() { new Tuple<Device, string>(newdevice, hhid) };
+                var quickResults = await AddDevicesToHousehold(OnNewPlayer, households, devlist);
+                nocache |= !quickResults.CacheResults;
+            }
+
+            if (households.Any())
+            {
+                Listener.Update(households.First().VisiblePlayerList.FirstOrDefault()?.IPAddress, 1400);
+                if (nocache && households.Count != 0)
+                {
+                    var later = NotifyMissingSystemAsync(households.First(), $"A Sonos system could not be found due to: {NetLogger.LikelyProblem}");
+                }
+                return new HouseholdResult(households, string.Empty, !nocache);
+            }
+            else
+            {
+                return null;
             }
         }
 
@@ -70,9 +125,10 @@ namespace OpenPhonos.Sonos
 
             carryon = false;
 
-            // If we didn't find any devices, try the last ditch list
-            if (devices.Count == 0 && LastDitchDeviceList?.Count > 0)
+            // Try the last ditch list
+            if (LastDitchDeviceList?.Count > 0)
             {
+                bool more = false;
                 foreach (var host in LastDitchDeviceList)
                 {
                     NetLogger.WriteLine("Trying last ditch device: {0}", host);
@@ -99,14 +155,19 @@ namespace OpenPhonos.Sonos
                         }
                     }
 
+                    // If we've already seen it, don't add it again
+                    if (devices.Any(d => d.Item1.BaseUri == newdevice.BaseUri))
+                        continue;
+
                     devices.Add(Tuple.Create(newdevice, hhid));
+                    more = true;
                     NetLogger.WriteLine("Using last ditch device: {0}", host);
                 }
 
                 // We have to set the Listener before we start subscribing to events
-                if (devices.Count != 0)
+                if (more)
                 {
-                    Listener.Update(null);
+                    Listener.Update(null, 0);
                 }
             }
 
@@ -115,6 +176,13 @@ namespace OpenPhonos.Sonos
             {
                 finaldevices = devices.ToList();
             }
+
+            return await AddDevicesToHousehold(OnNewPlayer, households, finaldevices);
+        }
+
+        private static async Task<HouseholdResult> AddDevicesToHousehold(Action<Player, string> OnNewPlayer, List<Household> households, List<Tuple<Device, string>> finaldevices)
+        {
+            bool nocache = false;
 
             foreach (var d in finaldevices)
             {
@@ -131,11 +199,33 @@ namespace OpenPhonos.Sonos
                 catch (Exception ex)
                 {
                     NetLogger.WriteLine("Device {0} skipped due to {1}", d.Item1.BaseUri, ex.Message);
+                    if (ex is UPnPForbiddenException)
+                    {
+                        NetLogger.LikelyProblem = ex.Message;
+                    }
+                    nocache = true;
+                }
+            }
+
+            int removed = households.RemoveAll(h => h.AllPlayerList.Count == 0);
+            if (removed != 0)
+            {
+                NetLogger.WriteLine($"Removed {removed} empty household(s)");
+                if (households.Count != 0)
+                {
+                    var later = NotifyMissingSystemAsync(households.First(), $"A Sonos system could not be found due to: {NetLogger.LikelyProblem}");
                 }
             }
 
             households.Sort(CompareHouseholds);
-            return new HouseholdResult(households, NetLogger.EntireLogAsString(), NetLogger.LikelyProblem);
+            return new HouseholdResult(households, NetLogger.LikelyProblem, !nocache);
+        }
+
+        private static async Task NotifyMissingSystemAsync(Household household, string msg)
+        {
+            // Tell the user, but wait a bit until the UX has installed a handler
+            await Task.Delay(TimeSpan.FromSeconds(3));
+            household.NotifyUser(new HouseholdEventArgs(msg));
         }
 
         public static async Task<HouseholdResult> CreateTestHouseholdAsync(string xml, Action<Player, string> onNewPlayer)
@@ -150,7 +240,7 @@ namespace OpenPhonos.Sonos
             }
             household.AssociatedZP = household.VisiblePlayerList.First();
             var hlist = new List<Household>() { household };
-            return new HouseholdResult(hlist, string.Empty, string.Empty);
+            return new HouseholdResult(hlist, string.Empty, false);
         }
 
         private static void CreateImposterPlayers(string xml)
@@ -211,15 +301,33 @@ namespace OpenPhonos.Sonos
         /// This action is called after a Zone update has completed with a description and a list of actions taken
         /// </summary>
         public Action<string, IEnumerable<string>> ZoneDiagnostic { get; set; }
-        internal ZoneGroupState GroupData { get; set; }
+        public ZoneGroupState GroupData { get; internal set; }
 
         public ObservableCollection<Group> Groups { get; }
+
+        public delegate void HouseholdEventHandler(object sender, HouseholdEventArgs args);
+        public event HouseholdEventHandler NotifyHousehold;
+
+        public class HouseholdEventArgs : EventArgs
+        {
+            public string Message { get; set; }
+
+            public HouseholdEventArgs(string msg)
+            {
+                Message = msg;
+            }
+        }
 
         public Household(string id)
         {
             HouseholdId = id;
             playerList = new List<Player>();
             Groups = new ObservableCollection<Group>();
+        }
+
+        public void NotifyUser(HouseholdEventArgs args)
+        {
+            NotifyHousehold?.Invoke(this, args);
         }
 
         /// <summary>
@@ -241,6 +349,16 @@ namespace OpenPhonos.Sonos
                 return;
 
             await AssociatedZP.ZoneGroupTopology.SubscribeAsync(OpenPhonos.UPnP.Listener.MinimumTimeout, "HH", ZoneGroupHandler);
+
+            foreach(var more in AllPlayerList)
+            {
+                // We need to get the Wireless attributes of Boosts/Bridges, this is the sole subscription they have
+                if (more.Invisible && (more.ModelNumber == "BR100" || more.ModelNumber == "BR200"))
+                {
+                    var what = new PlayerEventSelector() { Device = true };
+                    await more.SubscribeToEventsAsync(OpenPhonos.UPnP.Listener.MinimumTimeout, what);
+                }
+            }
         }
 
         private async Task ZoneGroupHandler(object sender, EventSubscriptionArgs args)
@@ -285,14 +403,14 @@ namespace OpenPhonos.Sonos
         {
             foreach(var info in newData.GetAllPlayers())
             {
-                if (FindPlayerById(info.Uuid) == null)
+                Player player = FindPlayerById(info.Uuid);
+                if (player == null)
                 {
-                    Player player = null;
                     try
                     {
                         var device = await Device.CreateAsync(info.Location);
                         {
-                            player = await Player.CreatePlayerAsync(device, info.Name, info.Uuid, info.Invisible == "1");
+                            player = await Player.CreatePlayerAsync(device, info);
                         }
                     }
                     catch (Exception)
@@ -306,6 +424,8 @@ namespace OpenPhonos.Sonos
                         AddPlayer(player);
                     }
                 }
+
+                player?.Update(info);
             }
         }
 
@@ -380,9 +500,24 @@ namespace OpenPhonos.Sonos
             return playerList.FirstOrDefault(p => p.UniqueName == uid);
         }
 
+        public string FindPlayerProblem(string uid)
+        {
+            var q = GroupData?.Quarantined.FirstOrDefault(p=>p.Uuid == uid);
+            if (q != null)
+            {
+                return $"Quarantined: {q.QuarantineReason}";
+            }
+            return null;
+        }
+
         private Group FindGroupById(string uid)
         {
             return Groups.First(g => g.Coordinator.UniqueName == uid);
+        }
+
+        private Group FindGroupByIdOptional(string uid)
+        {
+            return Groups.FirstOrDefault(g => g.Coordinator.UniqueName == uid);
         }
 
         internal void AddGroup(Group group)
@@ -470,8 +605,16 @@ namespace OpenPhonos.Sonos
             ZoneLogger?.RemoveRoom(coord, puid);
 
             var player = FindPlayerById(puid);
-            var group = FindGroupById(coord);
-            group.RemovePlayer(player);
+            var group = FindGroupByIdOptional(coord);
+            if (group != null)
+            {
+                group.RemovePlayer(player);
+            }
+            else
+            {
+                // The Player was on its own, so its group is gone
+                int todo = 1;
+            }
         }
 
         void ZoneGroupState.IZoneDelta.CreatePlayer(string puid)

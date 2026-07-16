@@ -1,0 +1,27 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+			 xmlns:vm="clr-namespace:PhonosAvalon.ViewModels"
+			 x:DataType="vm:MainViewModel"
+			 x:CompileBindings="True"
+             x:Class="PhonosAvalon.Views.MessageView">
+	<UserControl.Styles>
+		<Style Selector="TextBlock">
+			<Setter Property="HorizontalAlignment" Value="Center"/>
+			<Setter Property="Margin" Value="0,12,0,12"/>
+		</Style>
+	</UserControl.Styles>
+
+	<Grid DataContext="{Binding Message}" RowDefinitions="Auto,*,Auto,Auto" MinHeight="200" Margin="20">
+		<TextBlock Grid.Row="0" Text="Important Message" FontSize="20" FontWeight="Bold"/>
+		<TextBlock Grid.Row="1" Text="{Binding Message}" FontSize="14" MaxLines="3" TextWrapping="Wrap" VerticalAlignment="Center"/>	
+		<HyperlinkButton Grid.Row="2" Margin="0,16,0,16"
+						 Content="{Binding LinkMessage}" 
+						 NavigateUri="{Binding Link}" 
+						 IsVisible="{Binding Link, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
+						 HorizontalAlignment="Center" />
+		<Button Grid.Row="3" Content="OK" HorizontalContentAlignment="Center" MinWidth="100" Click="OK_Clicked" HorizontalAlignment="Center" VerticalAlignment="Bottom"/>
+	</Grid>
+</UserControl>

@@ -1,16 +1,17 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <OutputType>Exe</OutputType>
-    <TargetFramework>net8.0-ios17.0</TargetFramework>
+    <TargetFramework>net9.0-ios</TargetFramework>
     <SupportedOSPlatformVersion>11.0</SupportedOSPlatformVersion>
     <ProvisioningType>manual</ProvisioningType>
     <Nullable>enable</Nullable>
+	<NullabilityInfoContextSupport>true</NullabilityInfoContextSupport>
     <RuntimeIdentifier>iossimulator-x64</RuntimeIdentifier>
     
     <!-- These properties need to be set in order to run on a real iDevice -->
-    <CodesignKey>Apple Development: Created via API (XXXXXX)</CodesignKey>
-	<CodesignProvision>PROVISIONINGPROFILE</CodesignProvision>
-	<ApplicationId>com.example.openphonos</ApplicationId>
+	  <CodesignKey>Apple Development: Created via API (XXXXXX)</CodesignKey>
+	  <CodesignProvision>PROVISIONINGPROFILE</CodesignProvision>
+	  <ApplicationId>com.example.openphonos</ApplicationId>	<Configurations>Debug;Release;Store Release</Configurations>
   </PropertyGroup>
 
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
@@ -23,9 +24,10 @@
     <CreatePackage>false</CreatePackage>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="Avalonia" Version="11.1.4" />
-    <PackageReference Include="Avalonia.iOS" Version="11.1.4" />
-    <PackageReference Include="Avalonia.Skia" Version="11.1.4" />
+    <PackageReference Include="Avalonia" Version="11.3.6" />
+    <PackageReference Include="Avalonia.iOS" Version="11.3.6" />
+    <PackageReference Include="Avalonia.Skia" Version="11.3.6" />
+    <PackageReference Include="SkiaSharp" Version="3.119.1" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\Sonos\Sonos.csproj" />

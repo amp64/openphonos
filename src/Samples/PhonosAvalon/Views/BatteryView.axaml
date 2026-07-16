@@ -3,14 +3,14 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
 			 xmlns:vm="clr-namespace:PhonosAvalon.ViewModels"
-             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+             mc:Ignorable="d" d:DesignWidth="160" d:DesignHeight="50"
 			 x:DataType="vm:BatteryViewModel"
              x:Class="PhonosAvalon.Views.BatteryView">
 	<Grid
-		ColumnDefinitions="32,Auto" Height="16"
+		ColumnDefinitions="32" RowDefinitions="14,14"
 		ToolTip.Tip="{Binding Summary}"
 		IsVisible="{Binding, Converter={x:Static ObjectConverters.IsNotNull}}">
-		<Canvas Margin="0,0,2,0" Width="32" Height="32">
+		<Canvas Margin="-14,0,0,0" Width="32" Height="32" HorizontalAlignment="Center">
 			<Canvas.RenderTransform>
 				<ScaleTransform ScaleX="0.16" ScaleY="0.2"/>
 			</Canvas.RenderTransform>
@@ -24,7 +24,7 @@
 					 IsVisible="{Binding Charging}"/>
 		</Canvas>
 		<TextBlock Text="{Binding Charged, StringFormat={}{0}%}" 
-				   Grid.Column="1"
-				   FontSize="6" VerticalAlignment="Center"/>
+				   Grid.Row="1"
+				   FontSize="6" VerticalAlignment="Top" HorizontalAlignment="Center"/>
 	</Grid>
 </UserControl>

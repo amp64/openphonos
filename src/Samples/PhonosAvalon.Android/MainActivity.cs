@@ -1,6 +1,7 @@
 ﻿using Android.App;
 using Android.Content.PM;
 using Android.OS;
+using Android.Content.Res;
 
 using Avalonia;
 using Avalonia.Android;
@@ -20,6 +21,7 @@ public class MainActivity : AvaloniaMainActivity<App>
         var context = Application?.ApplicationContext;
         App.DisplayVersion = context?.PackageManager?.GetPackageInfo(context.PackageName, 0).VersionName;
         App.OSDisplayVersion = Build.VERSION.Release;
+        App.UseLargeLayout = context!.Resources!.Configuration!.ScreenLayout.HasFlag(ScreenLayout.SizeLarge);
 
         return base.CustomizeAppBuilder(builder)
             .WithInterFont();

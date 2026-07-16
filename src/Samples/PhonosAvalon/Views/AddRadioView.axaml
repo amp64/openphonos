@@ -1,0 +1,59 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+			 xmlns:local="clr-namespace:PhonosAvalon.Views"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+             xmlns:vm="clr-namespace:PhonosAvalon.ViewModels"
+			 x:DataType="vm:MainViewModel"
+             x:Class="PhonosAvalon.Views.AddRadioView">
+	<UserControl.Resources>
+		<local:IsUrlValidConverter x:Key="IsUrlValid"/>
+	</UserControl.Resources>
+	
+	<Grid Margin="20">
+		<StackPanel Orientation="Vertical">
+			<TextBlock Text="Add a Radio Station" HorizontalAlignment="Center" FontWeight="Bold" Margin="0,0,0,8"/>
+			<TextBlock MaxLines="3" TextWrapping="Wrap"
+					   Text="The new radio station will be added to TuneIn / My Radio Stations. Recommend you Test a stream before Adding."/>
+			<ProgressBar Height="4" IsIndeterminate="True" IsVisible="{Binding RadioViewModel.Busy}"/>
+			<Grid ColumnDefinitions="*,Auto">
+				<TextBox Watermark="Streaming URL" 
+						 TextInputOptions.ContentType="Url"
+						 Text="{Binding RadioViewModel.Url, Mode=TwoWay}"
+						 x:Name="URL"
+						 Margin="0,8,0,8"/>
+				<Button Grid.Column="1" Content="Test" 
+						Tapped="Button_Test"
+						Margin="4,0,0,0">
+					<Button.IsEnabled>
+						<MultiBinding Converter="{x:Static BoolConverters.And}">
+							<Binding Path="Text" ElementName="URL" Converter="{StaticResource IsUrlValid}"/>
+							<Binding Path="!RadioViewModel.Busy"/>
+						</MultiBinding>
+					</Button.IsEnabled>
+				</Button>
+			</Grid>
+			<TextBlock Text="{Binding RadioViewModel.StatusMessage}"/>
+			<TextBox Watermark="Station Name" Margin="0,8,0,8"
+					 x:Name="Name"
+					 Text="{Binding RadioViewModel.Name, Mode=TwoWay}"
+					 />
+			<TextBlock Text="You can find many station urls here: "/>
+			<HyperlinkButton NavigateUri="https://streamurl.link/" Content="https://streamurl.link/"/>
+			<Grid Margin="0,12,0,0" ColumnDefinitions="*,*">
+				<Button Grid.Column="0" Content="Cancel" Width="120" HorizontalContentAlignment="Center" HorizontalAlignment="Left" Tapped="Button_Cancel"/>
+				<Button Grid.Column="1" Content="Add" Width="120"
+						HorizontalContentAlignment="Center" HorizontalAlignment="Right" Tapped="Button_Add">
+					<Button.IsEnabled>
+						<MultiBinding Converter="{x:Static BoolConverters.And}">
+							<Binding Path="Text" ElementName="URL" Converter="{StaticResource IsUrlValid}"/>
+							<Binding Path="!RadioViewModel.Busy"/>
+							<Binding Path="Text" ElementName="Name" Converter="{x:Static StringConverters.IsNotNullOrEmpty}"/>
+						</MultiBinding>
+					</Button.IsEnabled>
+				</Button>
+			</Grid>
+		</StackPanel>
+	</Grid>
+</UserControl>

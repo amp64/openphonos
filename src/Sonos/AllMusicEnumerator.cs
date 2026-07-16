@@ -106,12 +106,21 @@ namespace OpenPhonos.Sonos
 
             if (_TVLocation != 0)
             {
-                if (source.HTCapable && _TVIndex == -1)
+                if (source.HTCapable)
                 {
-                    // Need to Add the TV item
-                    _All.Insert(_TVLocation, MusicItem.FromTitle(StringResource.Get("MusicTV")));
-                    _TVIndex = _TVLocation;
-                    _NextMusicServiceIndex++;
+                    if (_TVIndex == -1)
+                    {
+                        // Need to Add the TV item
+                        _All.Insert(_TVLocation, UPnPMusicItem.ForTV(source));
+                        _TVIndex = _TVLocation;
+                        _NextMusicServiceIndex++;
+                    }
+                    else
+                    {
+                        // Need to update the device name
+                        _All.RemoveAt(_TVIndex);
+                        _All.Insert(_TVIndex, UPnPMusicItem.ForTV(source));
+                    }
                 }
                 else if (!source.HTCapable && _TVIndex != -1)
                 {

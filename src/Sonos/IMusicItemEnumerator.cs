@@ -71,6 +71,12 @@ namespace OpenPhonos.Sonos
         Task<bool> UpdateAsync(Player source);
     }
 
+    public interface IMusicEnumeratorAttributes
+    {
+        bool CanAlphaJump { get; }
+        bool NeedsUpdate(Player.ContentChangedEventArgs args);
+    }
+
     /// <summary>
     /// This class is used whenever a enumerator needs to use a Player or Players
     /// </summary>

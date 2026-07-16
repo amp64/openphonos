@@ -24,23 +24,44 @@
 		<Style Selector="ToggleButton:checked ContentControl.audio-mute">
 			<Setter Property="IsVisible" Value="False"/>
 		</Style>
-	</UserControl.Styles>
 	
-	<Grid Margin="8,0,8,0"
-		  ColumnDefinitions="42,*,42">
+		<Style Selector="Button.UpDown">
+			<Setter Property="Foreground" Value="{DynamicResource ButtonForeground}"/>
+			<Setter Property="Background" Value="Transparent"/>
+			<Setter Property="Width" Value="{DynamicResource IconButtonSize}"/>
+			<Setter Property="Height" Value="{DynamicResource IconButtonSize}"/>
+			<Setter Property="HorizontalContentAlignment" Value="Center"/>
+			<Setter Property="VerticalContentAlignment" Value="Center"/>
+			<Setter Property="FontSize" Value="22"/>
+			<!-- these are important for Material theme -->
+			<Setter Property="Padding" Value="0"/>
+			<Setter Property="Margin" Value="4"/>
+		</Style>
+	
+	</UserControl.Styles>
+
+	<Grid Margin="0">
+		<Grid.ColumnDefinitions>
+			<ColumnDefinition Width="{DynamicResource IconButtonGrid}"/>
+			<ColumnDefinition Width="{DynamicResource IconButtonGrid}"/>
+			<ColumnDefinition Width="*"/>
+			<ColumnDefinition Width="{DynamicResource IconButtonGrid}"/>
+		</Grid.ColumnDefinitions>
+
 
 		<StackPanel Orientation="Horizontal"
-			Grid.Column="1"
+			Grid.Column="2"
 			VerticalAlignment="Top" HorizontalAlignment="Left"
 			IsVisible="{Binding ElementName=Page, Path=Title, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
 			<TextBlock Text="{Binding ElementName=Page, Path=Title}"/>
-			<view:BatteryView DataContext="{Binding ElementName=Page, Path=Battery}"/>
+			<view:BatteryView DataContext="{Binding ElementName=Page, Path=Battery}" VerticalAlignment="Top"/>
 		</StackPanel>
 
 		<ToggleButton
 			Margin="0,0,4,0"
 			IsChecked="{Binding Muted, Mode=TwoWay}"
 			Classes="IconStyle"
+			HotKey="VolumeMute"
 			ToolTip.Tip="Mute">
 			<Panel>
 				<ContentControl Classes="audio-off">
@@ -52,13 +73,25 @@
 			</Panel>
 		</ToggleButton>
 
-		<Slider 
+		<Button
 			Grid.Column="1"
-			VerticalAlignment="Center" 
+			Content="-"
+			Classes="UpDown"
+			Click="VolumeDown_Click"
+			Margin="0,0,8,0"
+			HotKey="VolumeDown"
+			IsVisible="{Binding !Fixed}"
+			/>
+		
+		<Slider
+			Grid.Column="2"
+			VerticalAlignment="Center"
 			TickPlacement="None"
-			Value="{Binding Volume}" 
+			Value="{Binding Volume}"
 			Maximum="100"
+			x:Name="PART_Slider"
 			IsEnabled="{Binding !Fixed}"
+			ValueChanged="OnValueChanged"
 			>
 			<Slider.Resources>
 				<x:Double x:Key="SliderHorizontalThumbWidth">16</x:Double>
@@ -66,28 +99,38 @@
 			</Slider.Resources>
 		</Slider>
 		<TextBlock
-			Grid.Column="1"
+			Grid.Column="2"
 			VerticalAlignment="Center"
 			HorizontalAlignment="Center"
 			Text="Fixed Volume"
-			Foreground="LightGray"
-			IsVisible="{Binding Fixed, FallbackValue=False}"
-			/>
-		<TextBlock
-			Grid.Column="2"
-			VerticalAlignment="Center"
-			HorizontalAlignment="Center"
-			Text="{Binding Volume}"
-			IsVisible="{Binding !Fixed}"
-			FontSize="10"
-			/>
-		<TextBlock
-			Grid.Column="2"
-			VerticalAlignment="Center"
-			HorizontalAlignment="Center"
-			Text="--"
 			IsVisible="{Binding Fixed}"
-			FontSize="10"
+			Foreground="LightGray"
 			/>
+		<Button
+			Grid.Column="3"
+			Content="+"
+			Classes="UpDown"
+			Click="VolumeUp_Click"
+			Margin="4,0,2,0"
+			HotKey="VolumeUp"
+			IsVisible="{Binding !Fixed}"
+			/>
+		<TextBlock
+			Grid.Column="2"
+			VerticalAlignment="Top"
+			HorizontalAlignment="Right"
+			Text="{Binding Volume}"
+			FontSize="10"
+			Margin="0,4,0,0"
+			>
+			<TextBlock.IsVisible>
+				<MultiBinding Converter="{x:Static BoolConverters.And}">
+					<Binding Path="ShowNumber" ElementName="Page"/>
+					<Binding Path="Fixed" Converter="{x:Static BoolConverters.Not}"/>
+				</MultiBinding>
+			</TextBlock.IsVisible>
+		
+		</TextBlock>
+			
 	</Grid>
 </UserControl>

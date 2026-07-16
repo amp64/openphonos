@@ -12,7 +12,7 @@
 			<RowDefinition Height="Auto"/>
 			<RowDefinition Height="Auto"/>
 			<RowDefinition Height="4*" MaxHeight="340"/>
-			<RowDefinition Height="40"/>
+			<RowDefinition Height="Auto"/>
 		</Grid.RowDefinitions>
 
 		<TextBlock Text="Groups:" FontSize="14"/>
@@ -53,9 +53,9 @@
 			</ListBox.ItemTemplate>
 		</ListBox>
 
-		<Grid Grid.Row="4" Margin="0,12,0,0">
-			<Button Content="Apply" Width="120" HorizontalContentAlignment="Center" HorizontalAlignment="Right" Tapped="Button_Ok"/>
-			<Button Content="Cancel" Width="120" HorizontalContentAlignment="Center" HorizontalAlignment="Left" Tapped="Button_Cancel"/>
+		<Grid Grid.Row="4" Margin="0,12,0,0" ColumnDefinitions="*,*">
+			<Button Grid.Column="0" Content="Apply" Width="120" HorizontalContentAlignment="Center" HorizontalAlignment="Left" Tapped="Button_Ok"/>
+			<Button Grid.Column="1" Content="Cancel" Width="120" HorizontalContentAlignment="Center" HorizontalAlignment="Right" Tapped="Button_Cancel"/>
 		</Grid>
 
 		<Grid Grid.RowSpan="5" Margin="-20" IsVisible="{Binding StatusMessage, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">

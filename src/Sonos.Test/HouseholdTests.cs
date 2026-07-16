@@ -42,7 +42,7 @@ namespace Sonos.Tests
                 await household.BuildGroupsAsync();
                 foreach (var group in household.Groups)
                 {
-                    output.WriteLine($"  Group {group.Summary()}");
+                    output.WriteLine($"  Group {group.Summary(true)}");
                 }
             }
         }

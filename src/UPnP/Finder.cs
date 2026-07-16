@@ -284,9 +284,9 @@ namespace OpenPhonos.UPnP
                 NetLogger.WriteLine("Ignoring {0} as {1}", name, why);
                 return false;
             }
-            else if (why != null)
+            else if (whynot != null)
             {
-                NetLogger.WriteLine("Warning {0} as {1}", name, why);
+                NetLogger.WriteLine("Warning {0} as {1}", name, whynot);
             }
 
             NetLogger.WriteLine($"Found {name} looks promising", name);
@@ -322,14 +322,19 @@ namespace OpenPhonos.UPnP
                 }
 
                 x = "read";
-                await ReadEverything(local, socket);           // will likely never return
+                await ReadEverything(local, socket); // will likely never return
             }
             catch (TimeoutException)
             {
             }
+            catch (SocketException ex) when (ex.SocketErrorCode == SocketError.HostUnreachable)
+            {
+                // TODO make this MacOS-only
+                NetLogger.LikelyProblem = "Verify 'Settings/Privacy/Local Network' is enabled for this app, then Retry";
+            }
             catch (SocketException ex)
             {
-                NetLogger.WriteLine($"Network broadcast error: {ex.Message} on {localIP} {x}");
+                NetLogger.WriteLine($"Network broadcast error: {ex.Message} on {localIP} {x} {ex.SocketErrorCode}");
             }
             catch (Exception ex)
             {

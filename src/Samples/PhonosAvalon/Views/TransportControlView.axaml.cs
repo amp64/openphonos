@@ -1,11 +1,13 @@
 using Avalonia.Controls;
-using FluentIcons.Avalonia;
 using Avalonia.Data;
 using Avalonia.Data.Converters;
-using System;
-using System.Globalization;
+using Avalonia.Media;
+using FluentIcons.Avalonia;
 using PhonosAvalon.ViewModels;
+using System;
 using System.Collections.Generic;
+using System.ComponentModel;
+using System.Globalization;
 
 namespace PhonosAvalon.Views
 {
@@ -19,7 +21,7 @@ namespace PhonosAvalon.Views
 
     public class PlayStateToSymbolIconConverter : IMultiValueConverter
     {
-        private SymbolIconConverter Converter = new SymbolIconConverter();
+        private TypeConverter Converter = TypeDescriptor.GetConverter(typeof(SymbolIcon));
 
         // First binding is PlayState, second binding is CanPause, third is CanStop
         public object? Convert(IList<object?> values, Type targetType, object? parameter, CultureInfo culture)
@@ -58,4 +60,82 @@ namespace PhonosAvalon.Views
         }
     }
 
+    // convert a bool to one of two brushes
+    public class BoolToBrushConverter : IValueConverter
+    {
+        public IBrush? TrueBrush { get; set; }
+        public IBrush? FalseBrush { get; set; }
+
+        public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
+        {
+            bool v = (bool)value;
+            IBrush? b = v ? TrueBrush : FalseBrush;
+            return b != null ? b : BindingValue<IBrush>.Unset;
+        }
+
+        public object? ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
+        {
+            throw new NotImplementedException();
+        }
+    }
+
+    // Converts a bool into a SymbolIcon
+    public class BoolToSymbolIconConverter : IValueConverter
+    {
+        private TypeConverter _converter = TypeDescriptor.GetConverter(typeof(SymbolIcon));
+
+        public string? TrueIcon { get; set; }
+        public string? FalseIcon { get; set; }
+
+        public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
+        {
+            var b = value != null && (bool)value;
+            string? which = b ? TrueIcon : FalseIcon;
+
+            if (which != null)
+            {
+                return _converter.ConvertFrom(which);
+            }
+            else
+            {
+                return BindingValue<object>.Unset;
+            }
+        }
+
+        public object? ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
+        {
+            throw new NotImplementedException();
+        }
+    }
+
+    public class RepeatToSymbolIconConverter : IValueConverter
+    {
+        private TypeConverter _converter = TypeDescriptor.GetConverter(typeof(SymbolIcon));
+
+        public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
+        {
+            var repeat = (NowPlayingViewModel.RepeatMode)value;
+            if (repeat == NowPlayingViewModel.RepeatMode.Off)
+            {
+                return _converter.ConvertFrom("ArrowRepeatAllOff");
+            }
+            else if (repeat == NowPlayingViewModel.RepeatMode.On)
+            {
+                return _converter.ConvertFrom("ArrowRepeatAll");
+            }
+            else if (repeat == NowPlayingViewModel.RepeatMode.One)
+            {
+                return _converter.ConvertFrom("ArrowRepeat1");
+            }
+            else
+            {
+                return BindingValue<object>.Unset;
+            }
+        }
+
+        public object? ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
+        {
+            throw new NotImplementedException();
+        }
+    }
 }

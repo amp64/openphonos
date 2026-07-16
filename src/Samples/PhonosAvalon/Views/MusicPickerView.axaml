@@ -19,6 +19,12 @@
 			<Setter Property="FontSize" Value="14"/>
 			<Setter Property="FontWeight" Value="DemiBold"/>
 		</Style>
+		<Style Selector="TextBlock.Line0:not(.IsEnabled)">
+			<Setter Property="FontWeight" Value="UltraLight"/>
+		</Style>
+		<Style Selector="TextBlock.Line0.IsEnabled">
+			<Setter Property="FontWeight" Value="DemiBold"/>
+		</Style>
 		<Style Selector="TextBlock.Line0E">
 			<Setter Property="FontSize" Value="10"/>
 			<Setter Property="Margin" Value="8,0,0,0"/>
@@ -33,7 +39,17 @@
 			<Setter Property="Foreground" Value="White"/>
 		</Style>
 
-		<Style Selector="ListBoxItem">
+		<Style Selector="TextBlock.Line1">
+			<Setter Property="FontSize" Value="14"/>
+		</Style>
+		<Style Selector="TextBlock.Line1:not(.IsEnabled)">
+			<Setter Property="FontWeight" Value="UltraLight"/>
+		</Style>
+		<Style Selector="TextBlock.Line1.IsEnabled">
+			<Setter Property="FontWeight" Value="Normal"/>
+		</Style>
+
+	<Style Selector="ListBoxItem">
 			<Setter Property="Padding" Value="4" />
 		</Style>
 
@@ -50,6 +66,8 @@
 		<local:SafeGetItemConverter x:Key="SafeGetItemConverter"/>
 		<local:StringSameConverter x:Key="StringSameConverter" DefaultValue="albumArtUri"/>
 		<local:ExplicitConverter x:Key="ExplicitConverter"/>
+		<local:EnabledConverter x:Key="EnabledConverter"/>
+		<local:PlayOptionsConverter x:Key="PlayOptionsConverter"/>
 
 		<!-- This is used in the default list view -->
 		<DataTemplate x:Key="MusicItemListTemplate" DataType="{x:Type OpenPhonos:MusicItem}">
@@ -66,10 +84,13 @@
 
 				<StackPanel Orientation="Vertical" Grid.Column="1" Grid.ColumnSpan="1" Margin="4,0,0,0" VerticalAlignment="Center">
 					<StackPanel Orientation="Horizontal" HorizontalAlignment="Left">
-						<TextBlock Text="{Binding Line0}" Classes="Line0"/>
+						<TextBlock Text="{Binding Line0}" 
+								   Classes="Line0" Classes.IsEnabled="{Binding Converter={StaticResource EnabledConverter}}"/>
 						<TextBlock Text="E" Classes="Line0E" IsVisible="{Binding IsExplicit}"/>
 					</StackPanel>
-					<TextBlock Text="{Binding Line1}" HorizontalAlignment="Left" IsVisible="{Binding Line1, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
+					<TextBlock Text="{Binding Line1}" HorizontalAlignment="Left" 
+							   Classes="Line1" Classes.IsEnabled="{Binding Converter={StaticResource EnabledConverter}}"
+							   IsVisible="{Binding Line1, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
 				</StackPanel>
 				<Image Grid.Column="0" Grid.RowSpan="1" Margin="2"
 					   IsVisible="{Binding ParentDisplayData.ItemThumbnails, Converter={StaticResource StringSameConverter}, 
@@ -80,14 +101,17 @@
 				<TextBlock Grid.Column="0" Grid.RowSpan="1"
 					   IsVisible="{Binding ParentDisplayData.ItemThumbnails, Converter={StaticResource StringSameConverter},
 						   ConverterParameter=trackNumber, TargetNullValue=False, FallbackValue=False}"
+						   Classes="Line1" Classes.IsEnabled="{Binding Converter={StaticResource EnabledConverter}}"
 						   Text="{Binding TrackNumber}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
 				<TextBlock Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="2"
 						   Text="{Binding Line2}" HorizontalAlignment="Left" MaxLines="2"
+						   Classes="Line1" Classes.IsEnabled="{Binding Converter={StaticResource EnabledConverter}}"
 						   IsVisible="{Binding Line2, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
 				<Button Grid.Column="2" Content="{ic:SymbolIcon Symbol=MoreHorizontal}" 
 						Classes="IconStyle"
-						Tapped="PlayButton_Clicked" 
-						IsVisible="{Binding IsPlayable}">
+						ToolTip.Tip="Play Options..."
+						IsVisible="{Binding Converter={StaticResource PlayOptionsConverter}}"
+						Click="PlayButton_Clicked">
 					<Button.ContextMenu>
 						<ContextMenu/>
 					</Button.ContextMenu>
@@ -100,7 +124,8 @@
 	
 	<Grid DataContext="{Binding MusicSource}">
 		<Grid.RowDefinitions>
-			<RowDefinition Height="32"/>
+			<RowDefinition Height="{DynamicResource IconButtonGrid}"/>
+			<RowDefinition Height="Auto"/>
 			<RowDefinition Height="Auto"/>
 			<RowDefinition Height="Auto"/>
 			<RowDefinition Height="Auto"/>
@@ -109,35 +134,34 @@
 		</Grid.RowDefinitions>
 
 		<Grid ColumnDefinitions="Auto,*,Auto,Auto">
-			<TextBlock Grid.Column="1" Text="{Binding Heading}" Classes="Line0" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+			<TextBlock Grid.Column="1" Text="{Binding Heading}" Classes="Line0" Classes.IsEnabled="True" HorizontalAlignment="Center" VerticalAlignment="Center"/>
 			<Button Grid.Column="0" 
 					Content="{ic:SymbolIcon Symbol=ArrowLeft}" 
 					Classes="IconStyle"
-					Width="32" 
+					ToolTip.Tip="Back"
 					Command="{Binding BackCommand}"/>
 			<Button Grid.Column="3" 
 					Content="{ic:SymbolIcon Symbol=Home}" 
 					Classes="IconStyle"
-					Width="32" 
+					ToolTip.Tip="Music Home"
 					Command="{Binding HomeCommand}"/>
 			<Button Grid.Column="2" 
 					Content="{ic:SymbolIcon Symbol=Search}" 
 					Classes="IconStyle"
-					Width="32" 
+					ToolTip.Tip="Search"
 					Command="{Binding SearchToggleCommand}"
 					IsVisible="{Binding CanSearch, TargetNullValue=False, FallbackValue=False}"/>
 		</Grid>
 
-		<ProgressBar Grid.Row="1" IsIndeterminate="True" IsVisible="{Binding Busy}"/>
 		<TextBlock Grid.Row="1" Text="{Binding ParentItem.Item.DisplayData}" IsVisible="False"/>
 
 		<Grid Grid.Row="2" IsVisible="{Binding ParentItem.HeaderVisibility, FallbackValue=False, TargetNullValue=False}" 
 			  ColumnDefinitions="100,*" RowDefinitions="100,Auto">
 			<Image asyncImageLoader:ImageLoader.Source="{Binding ParentItem.Item.ArtUriAsync^, TargetNullValue={StaticResource DefaultArt}}" Stretch="Uniform"/>
 			<StackPanel Grid.Column="1" Orientation="Vertical" VerticalAlignment="Center" Margin="8,0,0,0">
-				<TextBlock Classes="Line0" TextWrapping="Wrap">
+				<TextBlock Classes="Line0" Classes.IsEnabled="True" TextWrapping="Wrap">
 					<Run Text="{Binding ParentItem.Header0}"/>
-					<Run Text="{Binding ParentItem.Item.IsExplicit, Converter={StaticResource ExplicitConverter}}" Classes="HeaderE"/>
+					<Run Text="{Binding ParentItem.Item.IsExplicit, Converter={StaticResource ExplicitConverter}, Mode=OneWay}" Classes="HeaderE"/>
 				</TextBlock>
 				<TextBlock Text="{Binding ParentItem.Header1}" TextWrapping="Wrap"/>
 			</StackPanel>
@@ -149,8 +173,10 @@
 		<Grid Grid.Row="3" IsVisible="{Binding ParentItem.CanPlayShuffle, FallbackValue=False, TargetNullValue=False}" 
 			  ColumnDefinitions="100,100">
 			<Button Grid.Column="0" Content="{ic:SymbolIcon Symbol=Play}" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center"
+					ToolTip.Tip="Play All"
 					Command="{Binding PlayCommand}" CommandParameter="{Binding ParentItem.Item}"/>
 			<Button Grid.Column="1" Content="{ic:SymbolIcon Symbol=ArrowShuffle}" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center"
+					ToolTip.Tip="Shuffle All"
 					Command="{Binding ShuffleCommand}" CommandParameter="{Binding ParentItem.Item}"/>
 		</Grid>
 
@@ -166,12 +192,17 @@
 				</TextBox>
 				<Button Grid.Column="1" Content="{ic:SymbolIcon Symbol=Search}"
 						Classes="IconStyle"
+						ToolTip.Tip="Start Search"
 						Tapped="SearchTextBox_Search"/>
 			</Grid>
 		</Grid>
+
+		<Grid Grid.Row="5" IsVisible="{Binding AlphaJumpVisible, TargetNullValue=False, FallbackValue=False}">
+			<local:AlphaJumpView DataContext="{Binding AlphaJumpData}" />
+		</Grid>
 		
-		<Grid Grid.Row="5">
-			<ListBox ItemsSource="{Binding Items}"
+		<Grid Grid.Row="6">
+			<ListBox ItemsSource="{Binding Items}" x:Name="MusicListBox"
 					 IsVisible="{Binding ViewType, Converter={StaticResource ViewTypeConverter}, ConverterParameter=Default}" 
 					 HorizontalAlignment="Stretch" VerticalAlignment="Stretch"
 					 SelectionChanged="OnSelectionChanged"
@@ -200,7 +231,7 @@
 								<Image asyncImageLoader:ImageLoader.Source="{Binding ArtUri, TargetNullValue={StaticResource DefaultArt}}"
 										Margin="-4"
 										Stretch="Uniform" HorizontalAlignment="Center" VerticalAlignment="Top"/>
-								<TextBlock Grid.Row="1" Text="{Binding Line0}" Classes="Line0" FontSize="12" HorizontalAlignment="Left" TextTrimming="CharacterEllipsis"/>
+								<TextBlock Grid.Row="1" Text="{Binding Line0}" Classes="Line0" Classes.IsEnabled="True" FontSize="12" HorizontalAlignment="Left" TextTrimming="CharacterEllipsis"/>
 								<TextBlock Grid.Row="2" Text="{Binding Line1}" FontSize="10" HorizontalAlignment="Left" TextTrimming="CharacterEllipsis"
 											IsVisible="{Binding Line1, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
 							</Grid>
@@ -218,7 +249,7 @@
 									<RowDefinition Height="{StaticResource GridItemTextHeight}"/>
 								</Grid.RowDefinitions>
 
-								<TextBlock Grid.ColumnSpan="2" Grid.Row="2" Text="{Binding Line0}" Classes="Line0" MaxLines="1" TextWrapping="NoWrap" TextTrimming="CharacterEllipsis"/>
+								<TextBlock Grid.ColumnSpan="2" Grid.Row="2" Text="{Binding Line0}" Classes="Line0" Classes.IsEnabled="True" MaxLines="1" TextWrapping="NoWrap" TextTrimming="CharacterEllipsis"/>
 								<Image asyncImageLoader:ImageLoader.Source="{Binding InlineChildren, Converter={StaticResource SafeGetItemConverter}, ConverterParameter=0, TargetNullValue={StaticResource DefaultArt}}"
 									   Stretch="Uniform"/>
 								<Image Grid.Column="1"
@@ -234,7 +265,8 @@
 						</DataTemplate>
 					</local:MusicTemplateSelector>
 				</ListBox.DataTemplates>
-			</ListBox>		
+			</ListBox>
+			<ProgressBar IsIndeterminate="True" IsVisible="{Binding Busy}" VerticalAlignment="Top"/>
 		</Grid>
 	</Grid>
 </UserControl>

@@ -33,7 +33,7 @@ namespace OpenPhonos.Sonos
         private void Log(string msg, int value)
         {
             if (this.Logging)
-                Debug.WriteLine("{2} VolumeHandler {0} ({1})", msg, value, DateTime.Now.TimeOfDay.ToString("t"));
+                Debug.WriteLine("VolumeHandler {0} ({1})", msg, value);
         }
 
         // sets the volume, then waits for an event to ensure it has gone
@@ -46,8 +46,7 @@ namespace OpenPhonos.Sonos
             await Task.Run(() =>
             {
                 var ok = _VolumeWaiter.WaitOne(10 * 1000);
-                if (!ok)
-                    Log("waitfail", newvol);
+                Log(ok ? "waitok" : "waitfail", newvol);
             });
             _SettingVolume = false;
         }
@@ -57,7 +56,10 @@ namespace OpenPhonos.Sonos
         {
             LastValue = (ushort)eventvol;
 
-            if (eventvol != _LastSetVolume)
+            // Curiously the volume we get back in the event is not always the same we asked for,
+            // so allow some "slop"
+            int diff = (int)eventvol - _LastSetVolume;
+            if (diff > 1 || diff < -1)
             {
                 Log("event-change", eventvol);
                 return true;

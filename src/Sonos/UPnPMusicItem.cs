@@ -13,7 +13,8 @@ namespace OpenPhonos.Sonos
 {
     public class UPnPMusicItem : MusicItem
     {
-        public string Id { get; private set; }
+        public string Id { get; protected set; }
+        public string ParentId { get; private set; }
         public string Class { get; private set; }
         public string Creator { get; private set; }
         public string Album { get; private set; }
@@ -29,7 +30,17 @@ namespace OpenPhonos.Sonos
 
         internal static IEnumerable<UPnPMusicItem> Parse(string xml, Uri baseUrl)
         {
-            return Parse(XElement.Parse(xml), baseUrl);
+            try
+            {
+                return Parse(XElement.Parse(xml), baseUrl);
+            }
+            catch (XmlException)
+            {
+                var error = new UPnPMusicItem("XML Error", false, "ERR");
+                error.IsError = true;
+                error.Class = "object.error";
+                return new List<UPnPMusicItem>() { error };
+            }
         }
 
         internal static IEnumerable<UPnPMusicItem> Parse(XElement dom, Uri baseUrl)
@@ -58,9 +69,15 @@ namespace OpenPhonos.Sonos
             IsFavoritable = favable;
         }
 
+        private string AsDidl(XElement element)
+        {
+            return "<DIDL-Lite>" + element.ToString(SaveOptions.DisableFormatting) + "</DIDL-Lite>";
+        }
+
         internal UPnPMusicItem(XElement element, Uri baseUrl) : base()
         {
             Id = (string)element.Attribute(XName.Get("id"));
+            ParentId = (string)element.Attribute(XName.Get("parentID"));
             Title = (string)element.Element(XName.Get("title", DC));
             Res = (string)element.Element(XName.Get("res", NS));
             ArtUri = (string)element.Element(XName.Get("albumArtURI", UPNP));           // will likely need conversion before can be used
@@ -75,11 +92,17 @@ namespace OpenPhonos.Sonos
             IsFavoritable = true;
             IsAlarmable = false;
             bool cannotPlay = false;
+            bool mustPlay = false;
 
             if (Class.StartsWith("object.item.audioItem.audioBroadcast"))
             {
                 Metadata = element.ToString();
                 IsAlarmable = true;
+                if (ParentId == "R:0/0")
+                {
+                    // Radio Station
+                    IsDeletable = true;
+                }
             }
             else if (Class == "object.itemobject.item.sonos-favorite")
             {
@@ -93,10 +116,15 @@ namespace OpenPhonos.Sonos
                 Class = innerdidl.Class;
                 IsContainer = Class.StartsWith("object.container");
                 IsFavoritable = false;
+                if (innerdidl.IsError)
+                {
+                    Title += " [Error]";
+                }
                 IsDeletable = true;
 
                 Subtitle = Album;
-                cannotPlay = type == "shortcut";              // shortcuts cannot be played
+                cannotPlay = type == "shortcut" || innerdidl.IsError || !innerdidl.IsPlayable;              // shortcuts and errors cannot be played
+                mustPlay = type == "instantPlay" && !innerdidl.IsError && !string.IsNullOrEmpty(Res);       // for playable containers
             }
             else if (Class == "object.container.playlistContainer")
             {
@@ -105,7 +133,14 @@ namespace OpenPhonos.Sonos
             }
             else if (Class == "object.item.audioItem.musicTrack")
             {
-                Metadata = element.ToString();
+                Metadata = AsDidl(element);
+                Subtitle = Creator;
+                IsDeletable = ParentId.StartsWith("SQ:");      // Playlists
+            }
+            else if (Class.StartsWith("object.container.album.musicAlbum"))
+            {
+                Metadata = AsDidl(element);
+                Subtitle = Creator;
             }
 
             if (Id == "spdif-input")
@@ -113,7 +148,7 @@ namespace OpenPhonos.Sonos
                 Title = StringResource.Get("NPTV");
             }
 
-            IsPlayable = CalcIsPlayable() && !cannotPlay;
+            IsPlayable = (CalcIsPlayable() && !cannotPlay) || mustPlay;
             IsQueueable = CalcIsQueueable();
             IsFavoritable &= IsQueueable;
         }
@@ -142,20 +177,23 @@ namespace OpenPhonos.Sonos
             return original;
         }
 
-        // is the item playable? True if an audioitem or a playlist or a genre or an album, UNLESS it is the root Tracks item
+        static internal MusicItem ForTV(Player coord)
+        {
+            var tvdidl = DidlData.MakeTV(coord);
+            // Will need to update the res and title as the current zone changes
+            return new UPnPMusicItem("TV : " + coord.RoomName, false, tvdidl.Id, tvdidl.Metadata, tvdidl.Res, true, false);
+        }
+
+        // is the item playable? True if an audioitem or a playlist or a genre or an album
         private bool CalcIsPlayable()
         {
             return Class.StartsWith("object.item.audioItem") ||                 // any audioItem
                 Class == "object.container.genre.musicGenre" ||                   // a Genre
-                Class == "object.container.album.musicAlbum" ||                   // any Album
-                Class == "object.container" ||                                    // any container (eg from Folder view)
+                Class.StartsWith("object.container.album.musicAlbum") ||                   // any Album
+                (Class == "object.container" && ParentId.StartsWith(@"S:/")) ||   // Folder view containers (all other containers cannot be played)
                 Class == "object.container.person.musicArtist" ||                 // Artist on Rhapsody
                 Class == "object.container.playlistContainer.sameArtist" ||       // any fake-up "All" album
-                Class.StartsWith("object.container.playlistContainer#") ||        // Music Service playlist
-                (
-                    (Class == "object.container.playlistContainer") &&
-                    !Id.EndsWith(":TRACKS")
-                    );
+                Class.StartsWith("object.container.playlistContainer");           // Music Service playlist or Sonos Playlist
         }
 
         // is the item queueable? True if we can play it, unless its a radio stream or LineIn
@@ -192,9 +230,9 @@ namespace OpenPhonos.Sonos
 
     }
 
-    public class UPnPMusicItemEnumerator : IMusicItemEnumerator, IMusicItemSearchable
+    public class UPnPMusicItemEnumerator : IMusicItemEnumerator, IMusicItemSearchable, IMusicEnumeratorAttributes
     {
-        private const uint ChunkSize = 10;
+        protected uint ChunkSize = 10;
         private uint CurrentIndex;
         private uint StartIndexOfCache;
         private uint TotalSize;
@@ -212,11 +250,54 @@ namespace OpenPhonos.Sonos
 
         public MusicItem EmptyItem => null;
 
+        public uint UpdateID { get; protected set; }
+
         public string ArtUri { get; }
 
         public DisplayData ParentDisplayMode => null;
 
         public bool CanSearch => true;
+
+        public bool CanAlphaJump
+        {
+            get
+            {
+                // We support alpha jumping on Local Library and Folders
+                // but not too deep, we do NOT want it for Playlist contents or gigantic albums
+
+                int slash = BaseObjectID.Count(c => c == '/');
+
+                if (BaseObjectID.StartsWith("A:"))
+                {
+                    if (BaseObjectID.StartsWith("A:ALBUM") ||
+                        BaseObjectID.StartsWith("A:PLAYLISTS") ||
+                        BaseObjectID.StartsWith("A:COMPOSER") ||
+                        BaseObjectID.StartsWith("A:GENRE")
+                       )
+                    {
+                        // A:ALBUM/FOO do not want
+                        return slash == 0;
+                    }
+                    else
+                    {
+                        // A:ARTIST/Adele/ yes
+                        return slash < 3;
+                    }
+                }
+                else if (BaseObjectID.StartsWith("S:"))
+                {
+                    // Folders have path like S://server/share/foo etc
+                    if (BaseObjectID.Length >= 4)
+                    {
+                        slash = BaseObjectID.Substring(4).Count(c => c == '/');
+                    }
+
+                    return slash < 2;
+                }
+
+                return false;
+            }
+        }
 
         public virtual bool CanExport(ExportType exportType)
         {
@@ -244,6 +325,7 @@ namespace OpenPhonos.Sonos
                     var items = await callbacks.Player.ContentDirectory.Browse(BaseObjectID, "BrowseDirectChildren", "*", CurrentIndex, ChunkSize, string.Empty);
                     items.ThrowIfFailed();
                     TotalSize = items.TotalMatches;
+                    UpdateID = items.UpdateID;
                     CachedItems = UPnPMusicItem.Parse(items.Result, callbacks.Player.AVTransport.BaseUri);
                 }
                 else
@@ -263,7 +345,7 @@ namespace OpenPhonos.Sonos
 
         public async Task<int> CountAsync(PlayerCallbacks callbacks)
         {
-            if (TotalSize == 0)
+            if (TotalSize == 0 && callbacks.Player.IsRealPlayer)
             {
                 var items = await callbacks.Player.ContentDirectory.Browse(BaseObjectID, "BrowseDirectChildren", string.Empty, 0, 1, string.Empty);
                 items.ThrowIfFailed();
@@ -344,6 +426,28 @@ namespace OpenPhonos.Sonos
         public IMusicItemEnumerator GetSearchEnumerator(string search)
         {
             return new UPnPMusicItemFinder(search);
+        }
+
+        private uint EventUpdateID;
+
+        public bool NeedsUpdate(Player.ContentChangedEventArgs args)
+        {
+            // When something playlist-related changes, we need to update
+            // this enumerator if it is a playlist or the list of playlists
+            bool update = BaseObjectID.StartsWith("SQ:") && args.IDs.StartsWith("SQ:");
+
+            // When the list of Favorites changes (or a Fave is renamed), we need to update the list
+            update |= args.What == "FV:2" && BaseObjectID == args.What;
+
+            // When the list of Radio Stations changes we need to update that list
+            update |= args.What == "R:0" && BaseObjectID.StartsWith(args.What);
+
+            if (update && EventUpdateID < args.UpdateId)
+            {
+                EventUpdateID = args.UpdateId;
+            }
+
+            return update;
         }
     }
 
@@ -468,6 +572,7 @@ namespace OpenPhonos.Sonos
     {
         public SonosPlaylistEnumerator() : base(StringResource.Get("MusicSonosPlaylists"), "SQ:")
         {
+            ChunkSize = 50;
         }
 
         public SonosPlaylistEnumerator(string title, string id) : base(title, id)
@@ -535,7 +640,6 @@ namespace OpenPhonos.Sonos
             AddEnumerator(new UPnPMusicItemEnumerator(StringResource.Get("Tracks"), "A:TRACKS"));
             AddEnumerator(new UPnPMusicItemEnumerator(StringResource.Get("ImportedPlaylists"), "A:PLAYLISTS"));
             AddEnumerator(new UPnPMusicItemEnumerator(StringResource.Get("Folders"), "S:"));
-            AddEnumerator(new LineInEnumerator());
         }
 
         public override bool CanSearch => true;
@@ -811,6 +915,9 @@ namespace OpenPhonos.Sonos
 
         protected override async Task InitializeAsync(PlayerCallbacks callbacks)
         {
+            if (!callbacks.Player.IsRealPlayer)
+                return;
+
             var radio = await callbacks.Player.SystemProperties.GetString("R_RadioLocation");
 
             if (radio.Error == null)
@@ -856,7 +963,7 @@ namespace OpenPhonos.Sonos
 
         public Task<int> CountAsync(PlayerCallbacks callbacks)
         {
-            throw new NotImplementedException();
+            return Task.FromResult(-1);
         }
 
         public async Task<string> ExportAsync(PlayerCallbacks callbacks, ExportType exportType)

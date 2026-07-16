@@ -32,6 +32,10 @@
 			<Setter Property="HorizontalContentAlignment" Value="Center"/>
 			<Setter Property="Margin" Value="10,0,10,0"/>
 		</Style>
+		<Style Selector="HyperlinkButton">
+			<!-- Required for Material to look like Fluent-->
+			<Setter Property="Padding" Value="8,5,8,6"/>
+		</Style>
 	</UserControl.Styles>
 
 	<Grid Margin="20" RowDefinitions="Auto,*,Auto">
@@ -40,18 +44,104 @@
 			<TextBlock Text="{Binding AppVersion}" FontSize="14"/>
 			<TextBlock Text="{Binding Copyright}" FontSize="14"/>
 			<TextBlock Margin="0,12,0,0" FontSize="14">
-				<Run Text="This is an experimental release - please email your feedback to" />
+				<Run Text="Please email all your feedback to" />
 				<Run Text="{Binding HelpEmailAddress}"/>
 			</TextBlock>
 
-			<TextBlock Text="Known issues" Classes="Heading"/>
-			<TextBlock xml:space="preserve" Classes="List">The Queue page is incomplete.
-			</TextBlock>
 			<TextBlock Text="History" Classes="Heading"/>
 		</StackPanel>
 		<ScrollViewer Grid.Row="1">
 			<Grid>
 				<StackPanel>
+					<TextBlock Classes="List" FontWeight="Bold" Text="Version 1.5.3"/>
+					<TextBlock xml:space="preserve" Classes="List">
+Fix network scan on complex network configurations.
+					</TextBlock>
+					<TextBlock Classes="List" FontWeight="Bold" Text="Version 1.5.2"/>
+					<TextBlock xml:space="preserve" Classes="List">
+Queue page: delete tracks by swiping them left.
+Custom radio stations can be deleted.
+Windows: fixed Store icons.
+					</TextBlock>
+					<TextBlock Classes="List" FontWeight="Bold" Text="Version 1.5.1"/>
+					<TextBlock xml:space="preserve" Classes="List">
+Mac: fix for MacOS 26.
+Added media keys support.
+					</TextBlock>
+					<TextBlock Classes="List" FontWeight="Bold" Text="Version 1.4.1"/>
+					<TextBlock xml:space="preserve" Classes="List">
+Added +/- buttons to volume control.
+Windows/Mac: Window position saved.
+					</TextBlock>
+					<TextBlock Classes="List" FontWeight="Bold" Text="Version 1.4.0"/>
+					<TextBlock xml:space="preserve" Classes="List">
+Added EQ and TV settings (via group volume list).
+Added App Settings (including light/dark theme).
+Fixed Music Library issue with playlists.
+					</TextBlock>
+					<TextBlock Classes="List" FontWeight="Bold" Text="Version 1.3.3"/>
+					<TextBlock xml:space="preserve" Classes="List">
+Added checks for Sonos UPnP blocking.
+					</TextBlock>
+					<TextBlock Classes="List" FontWeight="Bold" Text="Version 1.3.2"/>
+					<TextBlock xml:space="preserve" Classes="List">
+Much faster startup (after first run).
+Add to Sonos Favorites (and Delete).
+Improved error reporting.
+					</TextBlock>
+					<TextBlock Classes="List" FontWeight="Bold" Text="Version 1.3.0"/>
+					<TextBlock xml:space="preserve" Classes="List">
+Add podcast/ebook skip -10/+30s buttons.
+Fixed Dark Mode (on Mac).
+Fixed TV name updating.
+Fixed YTM albums.
+					</TextBlock>
+					<TextBlock Classes="List" FontWeight="Bold" Text="Version 1.2.3"/>
+					<TextBlock xml:space="preserve" Classes="List">
+First Macintosh version.						
+Fixed Devices view for Boost.
+TV adds room name.
+					</TextBlock>
+					<TextBlock Classes="List" FontWeight="Bold" Text="Version 1.2.2"/>
+					<TextBlock xml:space="preserve" Classes="List">
+Added Shuffle and Repeat buttons.
+Fixed Group Volume delay and Device Mute issue.
+					</TextBlock>
+					<TextBlock Classes="List" FontWeight="Bold" Text="Version 1.2.1"/>
+					<TextBlock xml:space="preserve" Classes="List">
+Custom radio station urls can be added.
+					</TextBlock>
+					<TextBlock Classes="List" FontWeight="Bold" Text="Version 1.2.0"/>
+					<TextBlock xml:space="preserve" Classes="List">
+Fixed delay during startup.
+Fixed landscape and portrait views on all device types (with rotation).
+					</TextBlock>
+					<TextBlock Classes="List" FontWeight="Bold" Text="Version 1.1.1"/>
+					<TextBlock xml:space="preserve" Classes="List">
+Add tracks to Sonos Playlists.
+Delete playlists, and tracks from playlists.
+Added alpha-jump to Local Library.
+Fixed TV playback.
+					</TextBlock>
+					<TextBlock Classes="List" FontWeight="Bold" Text="Version 1.1"/>
+					<TextBlock xml:space="preserve" Classes="List">
+Android: tablet layout support.
+New icon.
+					</TextBlock>
+					<TextBlock Classes="List" FontWeight="Bold" Text="Version 1.0.5"/>
+					<TextBlock xml:space="preserve" Classes="List">
+New feature: Queue page can save playlists and clear the queue.
+Windows: Group names now include all room names.
+Android: Fixed button bar in dark mode.
+Fixed line-in display when used on stereo pairs.
+					</TextBlock>
+					<TextBlock Classes="List" FontWeight="Bold" Text="Version 1.0.4"/>
+					<TextBlock xml:space="preserve" Classes="List">
+New feature: Devices screen, show how everything is connected.
+Android: Moved buttons to bottom, added Back button support.
+Windows: added Tooltips.
+Fixed occasional crash when speaker vanished.
+					</TextBlock>
 					<TextBlock Classes="List" FontWeight="Bold" Text="Version 1.0.3"/>
 					<TextBlock xml:space="preserve" Classes="List">
 Network scan improvement.
@@ -77,6 +167,7 @@ Windows/Android: First release.
 			</WrapPanel>
 			<Grid ColumnDefinitions="*,2*,*" Margin="0,12,0,0">
 				<Button Grid.Column="1" Content="OK" Click="OkButton_Click"/>
+				<TextBlock Grid.Column="2" Text="{Binding DiagnosticCode}" HorizontalAlignment="Right" FontSize="10" VerticalAlignment="Bottom" />
 			</Grid>
 		</StackPanel>
 	</Grid>

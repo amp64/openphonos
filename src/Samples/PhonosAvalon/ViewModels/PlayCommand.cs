@@ -10,13 +10,18 @@ namespace PhonosAvalon.ViewModels
     {
         public event EventHandler? CanExecuteChanged;
 
-        private Player Player;
-        private PlayType Type;
+        protected readonly GroupViewModel Parent;
+        private readonly PlayType Type;
 
-        internal PlayCommand(Player player, PlayType playType)
+        internal PlayCommand(GroupViewModel parent, PlayType playType)
         {
-            Player = player;
+            Parent = parent;
             Type = playType;
+        }
+
+        protected PlayCommand(GroupViewModel parent)
+        {
+            Parent = parent;
         }
 
         public bool CanExecute(object? parameter)
@@ -33,16 +38,30 @@ namespace PhonosAvalon.ViewModels
             }
         }
 
-        private async Task ExecuteAsync(MusicItem music)
+        protected virtual Task ExecuteAsync(MusicItem music)
         {
-            try
+            return Parent.DoAndReportErrors(() =>
             {
-                await Player.PlayItemAsync(music, Type);
-            }
-            catch (Exception ex)
+                return Parent.Coordinator!.PlayItemAsync(music, Type);
+            });
+        }
+    }
+
+    internal class CustomCommand : PlayCommand
+    {
+        private readonly Func<Player, MusicItem, Task> CustomAction;
+
+        internal CustomCommand(GroupViewModel parent, Func<Player, MusicItem, Task> action) : base(parent)
+        {
+            CustomAction = action;
+        }
+
+        protected override Task ExecuteAsync(MusicItem music)
+        {
+            return Parent.DoAndReportErrors(() =>
             {
-                // TODO report this to the user somehow
-            }
+                return CustomAction(Parent.Coordinator!, music);
+            });
         }
     }
 }

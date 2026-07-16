@@ -4,14 +4,16 @@ using Avalonia.Controls.Templates;
 using Avalonia.Data.Converters;
 using Avalonia.Input;
 using Avalonia.Interactivity;
-using Avalonia.Markup.Xaml;
 using Avalonia.Metadata;
+using Avalonia.Threading;
+using Avalonia.VisualTree;
 using OpenPhonos.Sonos;
 using PhonosAvalon.ViewModels;
 using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Globalization;
+using System.Linq;
 
 namespace PhonosAvalon.Views;
 
@@ -32,6 +34,12 @@ public partial class MusicPickerView : UserControl
         if (group != null && group.MusicSource != null)
         {
             group.MusicSource.SourcePlayer = group.Coordinator;
+            group.MusicSource.OnMusicListJump = (where) =>
+            {
+                var scrollViewer = MusicListBox.FindDescendantOfType<ScrollViewer>();
+                scrollViewer!.ScrollToEnd();
+                Dispatcher.UIThread.Post(() => MusicListBox.ScrollIntoView(where));
+            };
         }
     }
 
@@ -88,7 +96,7 @@ public partial class MusicPickerView : UserControl
     public void WrapPanel_SizeChanged(object sender, SizeChangedEventArgs args)
     {
         var grid = sender as Grid;
-        if (Resources.TryGetValue("GridItemWidth", out var w))
+        if (Resources.TryGetValue("GridItemWidth", out var w) && args.NewSize.Width != 0)
         {
             double itemWidth = (double)w;
             const double pad = ListItemPadding * 2;
@@ -109,7 +117,7 @@ public partial class MusicPickerView : UserControl
     /// </summary>
     /// <param name="sender">Control that was clicked</param>
     /// <param name="args">TappedEventArgs</param>
-    public void PlayButton_Clicked(object sender, TappedEventArgs args)
+    public void PlayButton_Clicked(object sender, RoutedEventArgs args)
     {
         var control = sender as Control;
         var context = control.ContextMenu;
@@ -124,7 +132,10 @@ public partial class MusicPickerView : UserControl
             var music = control.DataContext as MusicItem;
 
             context.Items.Clear();
-            context.Items.Add(new MenuItem() { Header = "Play Now", Command = group.PlayNowCommand, CommandParameter = music });
+            if (music!.IsPlayable)
+            {
+                context.Items.Add(new MenuItem() { Header = "Play Now", Command = group.PlayNowCommand, CommandParameter = music });
+            }
             if (music.IsQueueable)
             {
                 context.Items.Add(new MenuItem() { Header = "Play Next", Command = group.PlayNextCommand, CommandParameter = music });
@@ -133,16 +144,23 @@ public partial class MusicPickerView : UserControl
             }
             if (music.IsDeletable)
             {
-                context.Items.Add(new MenuItem() { Header = "Delete", IsEnabled = false });
+                if (music.IsPlayable || music.IsQueueable)
+                {
+                    context.Items.Add(new Separator());
+                }
+                context.Items.Add(new MenuItem() { Header = "Delete", Command = group.RemoveItemCommand, CommandParameter = music });
+                if (music.IsFavoritable || music.IsQueueable)
+                {
+                    context.Items.Add(new Separator());
+                }
             }
             if (music.IsFavoritable)
             { 
-                context.Items.Add(new MenuItem() { Header = "Add to Sonos Favorites", IsEnabled = false });
+                context.Items.Add(new MenuItem() { Header = "Add to Sonos Favorites", Command = group.AddToFavoritesCommand, CommandParameter = music });
             }
-            if (false)
+            if (music.IsQueueable)
             {
-                // TODO
-                context.Items.Add(new MenuItem() { Header = "Add to Sonos Playlist" , IsEnabled = false });
+                context.Items.Add(new MenuItem() { Header = "Add to Sonos Playlist", Command = group.AddToPlaylistCommand, CommandParameter = music });
             }
             if (false)
             {
@@ -151,6 +169,17 @@ public partial class MusicPickerView : UserControl
             }
             context.Open();
         }
+    }
+
+    // Logic has to match PlayButton_Clicked, determines if the ... button shows up
+    internal static bool IsMenuAvailable(MusicItem music)
+    {
+        // If any of these then we'll need a menu
+        if (music.IsQueueable || music.IsDeletable || music.IsFavoritable)
+            return true;
+
+        // If its just a container, or just playable, then no menu (as a click is good enough), but if both, we need a menu
+        return music.IsContainer && music.IsPlayable;
     }
 
     public void SearchTextBox_KeyUp(object sender, KeyEventArgs args)
@@ -175,6 +204,26 @@ public partial class MusicPickerView : UserControl
         {
             cmd.Execute(arg);
         }
+    }
+}
+
+partial class PlayOptionsConverter : IValueConverter
+{
+    public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
+    {
+        if (value is MusicItem music)
+        {
+            return MusicPickerView.IsMenuAvailable(music);
+        }
+        else
+        {
+            return false;
+        }
+    }
+
+    public object? ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
+    {
+        throw new NotImplementedException();
     }
 }
 
@@ -264,6 +313,26 @@ public class ExplicitConverter : IValueConverter
     public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
     {
         return value is bool item && item ? " E " : null;
+    }
+
+    public object? ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
+    {
+        throw new NotImplementedException();
+    }
+}
+
+public class EnabledConverter : IValueConverter
+{
+    public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
+    {
+        if (value is MusicItem item)
+        {
+            return item.IsPlayable || item.IsContainer || item.IsError;
+        }
+        else
+        {
+            return false;
+        }
     }
 
     public object? ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)

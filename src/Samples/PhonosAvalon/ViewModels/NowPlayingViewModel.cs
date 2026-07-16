@@ -34,6 +34,13 @@ namespace PhonosAvalon.ViewModels
             Radio
         };
 
+        public enum RepeatMode
+        {
+            Off,
+            On,
+            One,
+        }
+
         #region public bindable properties
 
         private string _ErrorMessage;
@@ -50,7 +57,7 @@ namespace PhonosAvalon.ViewModels
             {
                 return _Error;
             }
-            private set
+            set
             {
                 SetProperty(ref _Error, value);
             }
@@ -299,38 +306,6 @@ namespace PhonosAvalon.ViewModels
             }
         }
 
-        private bool _NightMode;
-        public bool NightMode
-        {
-            get
-            {
-                return _NightMode;
-            }
-            set
-            {
-                if (SetProperty(ref _NightMode, value))
-                {
-                    // TODO var later = ActualPlayer.RenderingControl.SetEQ(0, "NightMode", (short)(value ? 1 : 0));
-                }
-            }
-        }
-
-        private bool _SpeechEnhancement;
-        public bool SpeechEnhancement
-        {
-            get
-            {
-                return _SpeechEnhancement;
-            }
-            set
-            {
-                if (SetProperty(ref _SpeechEnhancement, value))
-                {
-                    // TODO var later = ActualPlayer.RenderingControl.SetEQ(0, "DialogLevel", (short)(value ? 1 : 0));
-                }
-            }
-        }
-
         private string _TrackDescription;
         public string TrackDescription
         {
@@ -506,6 +481,9 @@ namespace PhonosAvalon.ViewModels
 
             var xml = XElement.Parse(lastchange);
             await RefreshAVTransportAsync(xml);
+
+            // Only after our first AVT update do we enable the progress updates to happen
+            UpdateAlive = true;
         }
 
         private async Task RefreshAVTransportAsync(XElement xml)
@@ -522,7 +500,7 @@ namespace PhonosAvalon.ViewModels
                 return (string)element.Attribute(XName.Get("val")).Value;
             };
 
-            ErrorMessage = string.Empty;
+            string errorMessage = string.Empty;
 
             var sleep = get("SleepTimerGeneration", R);
             if (sleep != null)
@@ -580,8 +558,11 @@ namespace PhonosAvalon.ViewModels
                 }
                 var msg = string.Format(status, track, source);
                 NetLogger.WriteLine(msg);
-                ErrorMessage = msg;
+                errorMessage = msg;
             }
+
+            ErrorMessage = errorMessage;
+            Error = !string.IsNullOrEmpty(errorMessage);
 
             var pm = get("CurrentPlayMode", NS);
             if (pm == null)
@@ -602,15 +583,31 @@ namespace PhonosAvalon.ViewModels
             }
             UpdateActions(actions);
 
-#if false
             var validplaymodes = get("CurrentValidPlayModes", R);
             if (validplaymodes != null)
             {
-                this.ShuffleVisible = validplaymodes.Contains("SHUFFLE");
-                this.RepeatVisible = validplaymodes.Contains("REPEAT");
-                this.CrossFadeVisible = validplaymodes.Contains("CROSSFADE");
+                this.CanShuffle = validplaymodes.Contains("SHUFFLE");
+                this.CanRepeat = validplaymodes.Contains("REPEAT");
+                //this.CrossFadeVisible = validplaymodes.Contains("CROSSFADE");
             }
 
+            this.ShuffleMode = pm.StartsWith("SHUFFLE");
+            switch (pm)
+            {
+                case "REPEAT_ALL":
+                case "SHUFFLE":
+                    Repeat = RepeatMode.On;
+                    break;
+                case "REPEAT_ONE":
+                case "SHUFFLE_REPEAT_ONE":
+                    Repeat = RepeatMode.One;
+                    break;
+                default:
+                    Repeat = RepeatMode.Off;
+                    break;
+            }
+
+#if false
             var crossf = get("CurrentCrossfadeMode", NS);
             if (crossf != null)
             {
@@ -662,7 +659,7 @@ namespace PhonosAvalon.ViewModels
             }
         }
 
-        private void UpdateActions(string actions)
+        private void UpdateActions(string? actions)
         {
             if (actions != null)
             {
@@ -672,7 +669,29 @@ namespace PhonosAvalon.ViewModels
                 CanPause = actions.Contains("Pause");
                 CanStop = actions.Contains("Stop");
 
-                // this.SeekVisible = this.Actions.Contains("X_DLNA_SeekTime");
+                SeekVisible = actions.Contains("X_DLNA_SeekTime");
+            }
+        }
+
+        private async Task SendPlayModeAsync()
+        {
+            string mode;
+            if (Repeat == RepeatMode.On)
+            {
+                mode = ShuffleMode ? "SHUFFLE" : "REPEAT_ALL";
+            }
+            else if (Repeat == RepeatMode.One)
+            {
+                mode = ShuffleMode ? "SHUFFLE_REPEAT_ONE" : "REPEAT_ONE";
+            }
+            else
+            {
+                mode = ShuffleMode ? "SHUFFLE_NOREPEAT" : "NORMAL";
+            }
+
+            if (ActualPlayer.IsRealPlayer)
+            {
+                await ActualPlayer.AVTransport.SetPlayMode(0, mode).Optional();
             }
         }
 
@@ -683,6 +702,7 @@ namespace PhonosAvalon.ViewModels
             CurrentRatings.Clear();
             TrackRatings[0].Reset();
             TrackRatings[1].Reset();
+            SkipMode = false;
 
             ExtendedMetadata = null;
 
@@ -857,6 +877,7 @@ namespace PhonosAvalon.ViewModels
                 InfoDescription = "Book";
                 Info = enqueueTransportMd.title;
                 defaultArt = BuiltinArt.Book;
+                SkipMode = SeekVisible;
             }
             else if (track.uclass == "object.item.audioItem.podcast")
             {
@@ -872,6 +893,7 @@ namespace PhonosAvalon.ViewModels
                 Album = track.releaseDate;
                 InfoDescription = source;
                 Info = string.Empty;
+                SkipMode = SeekVisible;
             }
             else if (track.uclass.StartsWith("object.item.audioItem.musicTrack"))
             {
@@ -1101,7 +1123,6 @@ namespace PhonosAvalon.ViewModels
             if (which == 0)
             {
                 await ActualPlayer.AVTransport.Pause(0);
-
             }
             else
             {
@@ -1114,6 +1135,30 @@ namespace PhonosAvalon.ViewModels
                     await ActualPlayer.StartPlaybackFromQueue(which);
                 }
             }
+        }
+
+        public async Task DeleteFromQueue(QueueMusicItem music, uint updateId)
+        {
+            if (ActualPlayer?.AVTransport == null)
+            {
+                return;
+            }
+
+            await ActualPlayer.RemoveQueueItemAsync(music, updateId);
+        }
+
+        public async Task<int> GetCurrentTrackAsync()
+        {
+            if (ActualPlayer?.AVTransport != null)
+            {
+                var state = await ActualPlayer.AVTransport.GetPositionInfo(0);
+                if (state.Error == null)
+                {
+                    return (int)state.Track;
+                }
+            }
+
+            return 0;
         }
 
         #region Commands
@@ -1173,6 +1218,78 @@ namespace PhonosAvalon.ViewModels
             set => SetProperty(ref _CanNext, value);
         }
 
+        public async Task ShuffleCommand(string _)
+        {
+            if (ActualPlayer == null)
+            {
+                return;
+            }
+
+            ShuffleMode = !ShuffleMode;
+            await SendPlayModeAsync();
+        }
+
+        private bool _CanShuffle;
+        public bool CanShuffle
+        {
+            get => _CanShuffle;
+            set => SetProperty(ref _CanShuffle, value);
+        }
+
+        private bool _ShuffleMode;
+        public bool ShuffleMode
+        {
+            get => _ShuffleMode;
+            set => SetProperty(ref _ShuffleMode, value);
+        }
+
+        private RepeatMode _Repeat;
+        public RepeatMode Repeat
+        {
+            get => _Repeat;
+            set => SetProperty(ref _Repeat, value);
+        }
+
+        private bool _CanRepeat;
+        public bool CanRepeat
+        {
+            get => _CanRepeat;
+            set => SetProperty(ref _CanRepeat, value);
+        }
+
+        private bool SupportsRepeatOne()
+        {
+            bool supportsRepeatOne = false;
+
+            if (ActualPlayer.IsRealPlayer)
+            {
+                // This is a terrible way and place to do this, but saves creating a bunch of infrastructure to do it correctly
+                // (which is to read the SCP for CurrentPlayMode.allowedValueList
+                int period = ActualPlayer.SoftwareVersion.IndexOf('.');
+                int v;
+                if (period > 0 && int.TryParse(ActualPlayer.SoftwareVersion.Substring(0, period), out v) && v >= 31)
+                {
+                    supportsRepeatOne = true;
+                }
+            }
+            return supportsRepeatOne;
+        }
+
+        public async Task RepeatCommand(string _)
+        {
+            if (Repeat == RepeatMode.Off)
+                Repeat = RepeatMode.On;
+            else if (Repeat == RepeatMode.On)
+                Repeat = SupportsRepeatOne() ? RepeatMode.One : RepeatMode.Off;
+            else
+                Repeat = RepeatMode.Off;
+
+            if (ActualPlayer.IsRealPlayer)
+            {
+                await SendPlayModeAsync();
+            }
+        }
+
         public async Task PreviousCommand(string _)
         {
             if (ActualPlayer == null)
@@ -1188,6 +1305,19 @@ namespace PhonosAvalon.ViewModels
         {
             get => _CanPrevious;
             set => SetProperty(ref _CanPrevious, value);
+        }
+
+        private bool _SkipMode;
+        public bool SkipMode
+        {
+            get => _SkipMode;
+            set => SetProperty(ref _SkipMode, value);
+        }
+
+        public async Task SkipCommand(string delta)
+        {
+            int change = int.Parse(delta);
+            await ActualPlayer.Skip(change);
         }
 
         #endregion
@@ -1250,11 +1380,12 @@ namespace PhonosAvalon.ViewModels
         }
 
         private Task UpdateProgressTask;
+        private bool UpdateAlive;
 
         // This should be called once a second to keep the Position updated
         internal void UpdateProgress()
         {
-            if (ActualPlayer != null && ActualPlayer.IsRealPlayer)
+            if (ActualPlayer != null && ActualPlayer.IsRealPlayer && UpdateAlive)
             {
                 if (UpdateProgressTask == null || UpdateProgressTask.IsCompleted)
                 {
@@ -1313,6 +1444,8 @@ namespace PhonosAvalon.ViewModels
 
             Art = GetArtUri(BuiltinArt.Track);
             Thumbnail = Art;
+
+            Position = 50;
         }
     }
     #endregion

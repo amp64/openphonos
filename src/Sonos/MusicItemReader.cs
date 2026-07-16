@@ -16,6 +16,8 @@ namespace OpenPhonos.Sonos
 
         public ReadOnlyObservableCollection<MusicItem> Items { get; private set; }
 
+        public event Action<MusicItem, int> OnItemAdded;
+
         public bool JustAnError { get; private set; }
 
         // This is used for non-Dynamic collections, else null
@@ -37,6 +39,7 @@ namespace OpenPhonos.Sonos
             {
                 _Items = new ObservableCollection<MusicItem>();
                 Items = new ReadOnlyObservableCollection<MusicItem>(_Items);
+                music.Reset();
             }
             _SourcePlayer = source;
             _PlayerCallbacks = callbacks;
@@ -67,9 +70,12 @@ namespace OpenPhonos.Sonos
                     var items = await MusicEnumerator.GetNextItemsAsync(_PlayerCallbacks);
                     if (items == null)
                         break;
+                    int index = _Items.Count;
                     foreach (var item in items)
                     {
                         _Items.Add(item);       // TODO inefficient
+                        OnItemAdded?.Invoke(item, index);
+                        index++;
                     }
                 }
             }

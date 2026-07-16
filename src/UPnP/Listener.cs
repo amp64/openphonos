@@ -46,11 +46,12 @@ namespace OpenPhonos.UPnP
 
                 try
                 {
-                    listenerSocket.Bind(new IPEndPoint(IPAddress.Any, port));
+                    var addr = Me ?? IPAddress.Any;
+                    listenerSocket.Bind(new IPEndPoint(addr, port));
                     listenerSocket.Listen(int.MaxValue);
 
                     var result = listenerSocket.LocalEndPoint as IPEndPoint;
-                    NetLogger.WriteLine($"Listener setup on {Me}:{result.Port} {result}");
+                    NetLogger.WriteLine($"Listener setup on {addr}:{result.Port} {result}");
 
                     ListenAndRespond(listenerSocket);
                     return;
@@ -222,7 +223,7 @@ namespace OpenPhonos.UPnP
             }
 
             if (listener != null)
-            { 
+            {
                 string contentType = "text/plain";
                 int contentSize = 0;
 
@@ -372,7 +373,7 @@ namespace OpenPhonos.UPnP
                 }
                 else if (eventnumber > NextEventNumber)
                 {
-                    Debug.WriteLine("{0}: EVENT(S) LOST", InternalName);
+                    Debug.WriteLine("{0}: {1}-{2} EVENT(S) LOST", InternalName, NextEventNumber, eventnumber);
                 }
                 else
                 {
@@ -536,6 +537,16 @@ namespace OpenPhonos.UPnP
             get { return RenewTimer != null; }
         }
 
+        internal void Clear()
+        {
+            Sid = string.Empty;
+            if (this.RenewTimer != null)
+            {
+                this.RenewTimer.Dispose();
+                this.RenewTimer = null;
+            }
+        }
+
         public void Unwanted()
         {
             Debug.WriteLine("{0} now unwanted ({1})", (object)InternalName, ListenerId);
@@ -585,6 +596,9 @@ namespace OpenPhonos.UPnP
                 if (string.IsNullOrEmpty(UPnPConfig.ListenerName))
                     throw new InvalidDataException("ListenerName not set");
 
+                if (listenerSocket == null)
+                    throw new InvalidDataException("Listener socket not set");
+
                 // Always return a "live" value to handle changing IP address/ListenerSocket
                 return string.Format("http://{0}:{1}/{2}/{3}", Me.ToString(), (listenerSocket.LocalEndPoint as IPEndPoint).Port, UPnPConfig.ListenerName, ListenerId);
             }
@@ -627,7 +641,7 @@ namespace OpenPhonos.UPnP
 
         //
         // Re-use an unsubscribed event to subscribe again (when Resuming)
-        private async Task ReSubscribe_Async()
+        internal async Task ReSubscribe_Async()
         {
             this.NextEventNumber = 0;
             await this.Parent.SubscribeAsync(this.RequestedTimeout, this.InternalName, null);       // leave the callbacks alone
@@ -704,24 +718,26 @@ namespace OpenPhonos.UPnP
             ListenActions.Clear();
         }
 
-        static public void Update(IPAddress newaddress)
+        // Given the address and port of a device on the local network, we can work out our own address
+        static public void Update(string ipaddress, int port)
         {
-            if (newaddress == null)
+            if (ipaddress == null)
             {
-                // Find out address while avoiding GetAllNetworkAddresses - requires internet connection though
-                using (Socket socket = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, 0))
-                {
-                    socket.Connect("8.8.8.8", 65530);
-                    IPEndPoint endPoint = socket.LocalEndPoint as IPEndPoint;
-                    newaddress = endPoint.Address;
-                    NetLogger.WriteLine($"Listener: {newaddress}");
-                }
+                ipaddress = "8.8.8.8";
+                port = 0;
             }
 
-            Me = newaddress;
+            // Find out address while avoiding GetAllNetworkAddresses - requires internet connection though
+            using (Socket socket = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, 0))
+            {
+                socket.Connect(ipaddress, port);
+                IPEndPoint endPoint = socket.LocalEndPoint as IPEndPoint;
+                Me = endPoint.Address;
+                NetLogger.WriteLine($"Listener (from {ipaddress}:{port}): {Me}");
+            }
         }
 
-        static async private Task OnResumeAllAsync()
+static async private Task OnResumeAllAsync()
         {
             Debug.WriteLine("Listener.OnResume start");
 

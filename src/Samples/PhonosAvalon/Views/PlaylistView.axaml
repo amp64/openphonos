@@ -1,0 +1,108 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+			 xmlns:ic="using:FluentIcons.Avalonia.MarkupExtensions"
+             xmlns:asyncImageLoader="clr-namespace:AsyncImageLoader;assembly=AsyncImageLoader.Avalonia"
+			 xmlns:OpenPhonos="clr-namespace:OpenPhonos.Sonos;assembly=OpenPhonos.Sonos"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+			 xmlns:vm="clr-namespace:PhonosAvalon.ViewModels"
+			 xmlns:local="clr-namespace:PhonosAvalon.Views;assembly=PhonosAvalon"
+			 x:DataType="vm:MusicPickerViewModel"
+			 x:CompileBindings="True"
+             x:Class="PhonosAvalon.Views.PlaylistView">
+	<UserControl.Resources>
+		<DataTemplate x:Key="PlaylistTemplate" DataType="{x:Type OpenPhonos:MusicItem}">
+			<Grid>
+				<Grid.ColumnDefinitions>
+					<ColumnDefinition Width="32"/>
+					<ColumnDefinition Width="*"/>
+				</Grid.ColumnDefinitions>
+				<Grid.RowDefinitions>
+					<RowDefinition Height="32"/>
+				</Grid.RowDefinitions>
+
+				<StackPanel Orientation="Vertical" Grid.Column="1" Margin="4,0,0,0" VerticalAlignment="Center">
+					<TextBlock Text="{Binding Title}" HorizontalAlignment="Left"/>
+				</StackPanel>
+			</Grid>
+		</DataTemplate>
+
+		<DataTemplate x:Key="MusicItemListTemplate" DataType="{x:Type OpenPhonos:QueueMusicItem}">
+			<Grid>
+				<Grid.ColumnDefinitions>
+					<ColumnDefinition Width="32"/>
+					<ColumnDefinition Width="*"/>
+					<ColumnDefinition Width="32"/>
+				</Grid.ColumnDefinitions>
+				<Grid.RowDefinitions>
+					<RowDefinition Height="32"/>
+				</Grid.RowDefinitions>
+
+				<StackPanel Orientation="Vertical" Grid.Column="1" Margin="4,0,0,0" VerticalAlignment="Center">
+					<TextBlock Text="{Binding Title}" HorizontalAlignment="Left"/>
+					<TextBlock Text="{Binding Subtitle}" HorizontalAlignment="Left" IsVisible="{Binding Subtitle, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
+				</StackPanel>
+				<Grid Grid.RowSpan="1" Grid.Column="2" HorizontalAlignment="Center" VerticalAlignment="Center" >
+					<Button Content="{ic:SymbolIcon Symbol=Play}"
+							Classes="IconStyle" Width="34"
+							Command="{Binding $parent[ListBox].((vm:GroupViewModel)DataContext).Queue.PlayPauseCommand}"
+							CommandParameter="{Binding}"
+							IsVisible="{Binding PlayVisible}"/>
+					<Button Content="{ic:SymbolIcon Symbol=Pause}"
+							Classes="IconStyle" Width="34"
+							Command="{Binding $parent[ListBox].((vm:GroupViewModel)DataContext).Queue.PlayPauseCommand}"
+							CommandParameter="{Binding}"
+							IsVisible="{Binding PauseVisible}"/>
+				</Grid>
+				<Image Grid.Column="0" Grid.RowSpan="2" Margin="2"
+					   asyncImageLoader:ImageLoader.Source="{Binding ArtUriAsync^}"
+					   Stretch="UniformToFill"
+							/>
+			</Grid>
+		</DataTemplate>
+
+		<local:StringSameConverter x:Key="StringSameConverter" DefaultValue="albumArtUri"/>
+	</UserControl.Resources>
+
+	<Design.DataContext>
+		<vm:FakeGroupViewModel />
+	</Design.DataContext>
+
+	<Grid>
+		<Grid.RowDefinitions>
+			<RowDefinition Height="Auto"/>
+			<RowDefinition Height="Auto"/>
+			<RowDefinition Height="*"/>
+		</Grid.RowDefinitions>
+		<Grid ColumnDefinitions="32,*" RowDefinitions="Auto,Auto">
+			<Button Classes="BackButton" Tapped="BackButton_Tapped" ToolTip.Tip="Back"/>
+			<TextBlock Grid.Column="0" Grid.Row="1" Grid.ColumnSpan="2"
+					   HorizontalAlignment="Center"
+					   VerticalAlignment="Center"
+					   Text="Add to Sonos Playlist:"/>
+			<TextBlock Grid.Column="1" Grid.Row="0" Grid.ColumnSpan="2"
+					   HorizontalAlignment="Center"
+					   VerticalAlignment="Center" FontWeight="Bold"
+					   Text="{Binding Playlists.ItemToAdd.Title}"/>
+		</Grid>
+
+		<Grid Grid.Row="1" RowDefinitions="4,Auto">
+			<ProgressBar IsVisible="{Binding Playlists.Busy}"
+						 IsIndeterminate="True"/>
+			<TextBlock Grid.Row="1" Padding="0,2,0,2"
+					   Text="{Binding Playlists.StatusMessage}" 
+					   HorizontalAlignment="Center"/>
+		</Grid>
+
+		<ListBox x:Name="PlaylistListBox" Grid.Row="2"
+				 MinHeight="250"
+				 ItemsSource="{Binding Playlists.Items}"
+				 HorizontalAlignment="Stretch" VerticalAlignment="Stretch"
+				 SelectionMode="Single"
+				 SelectionChanged="OnSelectionChanged"
+				 IsEnabled="{Binding !Playlists.Busy}"
+				 ItemTemplate="{StaticResource PlaylistTemplate}">
+		</ListBox>
+	</Grid>
+</UserControl>

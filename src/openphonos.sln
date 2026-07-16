@@ -25,6 +25,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "UPnP.Test", "UPnP.Test\UPnP
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Sonos.Test", "Sonos.Test\Sonos.Test.csproj", "{DDEED150-3F4B-4CC4-9BF5-C607F915336F}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PhonosAvalon.MacOS", "Samples\PhonosAvalon.MacOS\PhonosAvalon.MacOS.csproj", "{03E64A84-3F51-C2BB-D97D-2600F2D705E2}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -98,6 +100,12 @@ Global
 		{DDEED150-3F4B-4CC4-9BF5-C607F915336F}.Release|Any CPU.Build.0 = Release|Any CPU
 		{DDEED150-3F4B-4CC4-9BF5-C607F915336F}.Store Release|Any CPU.ActiveCfg = Release|Any CPU
 		{DDEED150-3F4B-4CC4-9BF5-C607F915336F}.Store Release|Any CPU.Build.0 = Release|Any CPU
+		{03E64A84-3F51-C2BB-D97D-2600F2D705E2}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{03E64A84-3F51-C2BB-D97D-2600F2D705E2}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{03E64A84-3F51-C2BB-D97D-2600F2D705E2}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{03E64A84-3F51-C2BB-D97D-2600F2D705E2}.Release|Any CPU.Build.0 = Release|Any CPU
+		{03E64A84-3F51-C2BB-D97D-2600F2D705E2}.Store Release|Any CPU.ActiveCfg = Store Release|Any CPU
+		{03E64A84-3F51-C2BB-D97D-2600F2D705E2}.Store Release|Any CPU.Build.0 = Store Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

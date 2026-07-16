@@ -8,6 +8,8 @@ using System.Diagnostics;
 using System.Text.Json;
 using Avalonia.Styling;
 using System.Runtime.CompilerServices;
+using System.Text.Json.Serialization.Metadata;
+using Microsoft.Extensions.Logging;
 
 namespace PhonosAvalon
 {
@@ -32,6 +34,10 @@ namespace PhonosAvalon
             public string? controllerId { get; set; }
             public string? currentZoneId { get; set; }
             public string? lastVersion { get; set; }
+            public string? lastMessage { get; set; }
+            public string? hosts { get; set; }
+            public int theme { get; set; }
+            public string? windowPos { get; set; }
         }
 
         private string SettingsFilename;
@@ -53,15 +59,20 @@ namespace PhonosAvalon
             {
                 var all = File.ReadAllText(SettingsFilename);
                 var json = System.Text.Json.JsonDocument.Parse(all);
-                var settings = json.Deserialize<SettingsInFile>();
+                var settings = json.Deserialize<SettingsInFile>(Options());
 
                 _controllerId = settings.controllerId;
                 _currentZoneId = settings.currentZoneId;
                 _lastVersion = settings.lastVersion;
+                _lastMessage = settings.lastMessage;
+                _hosts = settings.hosts;
+                _theme = settings.theme;
+                _windowPos = settings.windowPos;
             }
             catch (Exception ex)
             {
-                Debug.WriteLine($"Error reading settings file: {ex.Message}");
+                var log = App.AppLoggerFactory.CreateLogger("App");
+                log.LogError("Error reading settings file: {message} {file}", ex.Message, SettingsFilename);
             }
         }
 
@@ -72,19 +83,46 @@ namespace PhonosAvalon
                 controllerId = _controllerId,
                 currentZoneId = _currentZoneId,
                 lastVersion = _lastVersion,
+                lastMessage = _lastMessage,
+                hosts = _hosts,
+                theme = _theme,
+                windowPos = _windowPos
             };
 
             try
             {
-                var json = JsonSerializer.Serialize(settings);
+                var json = JsonSerializer.Serialize(settings, Options());
                 File.WriteAllText(SettingsFilename, json);
             }
             catch (Exception ex)
             {
-                Debug.WriteLine($"Error writing settings file: {ex.Message}");
+                var log = App.AppLoggerFactory.CreateLogger("App");
+                log.LogError("Error writing settings file: {message} {file}", ex.Message, SettingsFilename);
             }
         }
 
+        internal void Reset()
+        {
+            try
+            {
+                File.Delete(SettingsFilename);
+            }
+            catch (Exception ex)
+            {
+                var log = App.AppLoggerFactory.CreateLogger("App");
+                log.LogError("Error deleting settings file: {message} {file}", ex.Message, SettingsFilename);
+            }
+        }
+
+        private JsonSerializerOptions Options()
+        {
+            return new JsonSerializerOptions()
+            {
+                TypeInfoResolver = new DefaultJsonTypeInfoResolver(),
+                WriteIndented = true
+            };
+        }
+        
         private string? _controllerId;
         internal string? ControllerId
         {
@@ -104,6 +142,37 @@ namespace PhonosAvalon
         {
             get => _lastVersion;
             set => Setter(value, ref _lastVersion);
+        }
+
+        private string? _lastMessage;
+        internal string? LastMessage
+        {
+            get => _lastMessage;
+            set => Setter(value, ref _lastMessage);
+        }
+
+        private string? _hosts;
+        internal string? Hosts
+        {
+            get => _hosts;
+            set => Setter(value, ref _hosts);
+        }
+
+        // 0=default system theme
+        // 1=dark
+        // 2=light
+        private int _theme;
+        internal int Theme
+        {
+            get => _theme;
+            set => Setter(value, ref _theme);
+        }
+
+        private string? _windowPos;
+        internal string? WindowPos
+        {
+            get => _windowPos;
+            set => Setter(value, ref _windowPos);
         }
 
         private static void Setter<T>(T value, ref T member, [CallerMemberName] string? name = null)

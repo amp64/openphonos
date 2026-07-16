@@ -1,0 +1,44 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+             x:Class="PhonosAvalon.Views.SettingsView"
+			 xmlns:vm="clr-namespace:PhonosAvalon.ViewModels"
+			 x:DataType="vm:MainViewModel">
+	<UserControl.Styles>
+		<Style Selector="Button">
+			<Setter Property="HorizontalAlignment" Value="Stretch"/>
+			<Setter Property="Margin" Value="8"/>
+			<Setter Property="Padding" Value="12"/>
+			<Setter Property="HorizontalContentAlignment" Value="Center"/>
+		</Style>
+		<Style Selector="TextBlock">
+			<Setter Property="HorizontalAlignment" Value="Center"/>
+		</Style>
+		<Style Selector="TextBlock.small">
+			<Setter Property="HorizontalAlignment" Value="Center"/>
+			<Setter Property="FontSize" Value="10"/>
+			<Setter Property="Margin" Value="8,0,8,20"/>
+			<Setter Property="TextWrapping" Value="Wrap"/>
+		</Style>
+	</UserControl.Styles>
+	
+	<StackPanel Width="350" HorizontalAlignment="Center">
+		<TextBlock Text="App Settings" FontWeight="Bold" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="8"/>
+		<ComboBox SelectedIndex="{Binding Theme, Mode=TwoWay}" HorizontalAlignment="Center" Margin="8">
+			<ComboBoxItem Content="System theme"/>
+			<ComboBoxItem Content="Dark theme"/>
+			<ComboBoxItem Content="Light theme"/>
+		</ComboBox>
+		
+		<CheckBox IsVisible="False" IsChecked="{Binding LargeIcons, Mode=TwoWay}" Content="Use larger icons (experimental)" HorizontalAlignment="Center" Margin="8"/>
+		<Button Click="Network_Click" Content="Reset app network settings"/>		
+		<TextBlock Classes="small" Text="Use if new devices added or problems finding devices. (Will immediately exit)."/>
+
+		<Button Click="DeleteAll_Click" Content="Reset all app settings"/>
+		<TextBlock Classes="small" Text="(Will immediately exit)."/>
+
+		<Button Content="Done" Click="OkButton_Click" HorizontalAlignment="Center" Width="80"/>
+	</StackPanel>
+</UserControl>

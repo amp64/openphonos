@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Windows.Input;
 
 namespace PhonosAvalon.ViewModels
 {
@@ -21,6 +22,12 @@ namespace PhonosAvalon.ViewModels
         public string RoomName => ActualPlayer.RoomName;
         public BatteryViewModel? BatteryState { get => _BatteryState; private set => SetProperty(ref _BatteryState, value); }
 
+        // These determine which controls show up on the EQ panel. They never change.
+        public bool ShowFixed { get => Fixed; }
+        public bool ShowBasic { get => !Fixed; }
+        public bool ShowBalance { get => ActualPlayer.Feature3.HasFlag(Player.Feature3Flags.Balance) && !Fixed; }
+        public bool ShowHT { get => ActualPlayer.HTCapable && !Fixed; }
+
         public PlayerViewModel(Player p)
         {
             ActualPlayer = p;
@@ -29,15 +36,34 @@ namespace PhonosAvalon.ViewModels
             if (p.HasBattery)
             {
                 BatteryState = new BatteryViewModel();
-                p.PropertyChanged += Player_PropertyChanged;
             }
+            p.PropertyChanged += Player_PropertyChanged;
+            ResetCommand = new DoResetCommand(ActualPlayer);
         }
 
-        private void Player_PropertyChanged(object sender, System.ComponentModel.PropertyChangedEventArgs e)
+        // These are the names of properties that are monitored in the Player, and have the same named properties here
+        private static string[] MonitoredProperties = new string[]
+        {
+            nameof(Player.Bass),
+            nameof(Player.Treble),
+            nameof(Player.Loudness),
+            nameof(Player.Balance),
+            nameof(Player.NightMode),
+        };
+
+        private void Player_PropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
         {
             if (e.PropertyName == nameof(Player.BatteryState))
             {
                 BatteryState?.Update(ActualPlayer.BatteryState);
+            }
+            else if (e.PropertyName == nameof(Player.DialogLevel))
+            {
+                OnPropertyChanged(nameof(SpeechEnhancement));
+            }
+            else if (MonitoredProperties.Contains(e.PropertyName))
+            {
+                OnPropertyChanged(e.PropertyName);
             }
         }
 
@@ -78,6 +104,122 @@ namespace PhonosAvalon.ViewModels
         public bool IsPlayer(Player p)
         {
             return ActualPlayer == p;
+        }
+
+        public bool Loudness
+        {
+            get
+            {
+                return ActualPlayer.Loudness != 0;
+            }
+            set
+            {
+                if (value != (ActualPlayer.Loudness != 0))
+                {
+                    var later = ActualPlayer.SetLoudnessAsync(value);
+                    OnPropertyChanged(nameof(Loudness));
+                }
+            }
+        }
+
+        // Treble range is +/-10
+        public short Treble
+        {
+            get
+            {
+                return ActualPlayer.Treble;
+            }
+            set
+            {
+                if (value != ActualPlayer.Treble)
+                {
+                    var later = ActualPlayer.SetTrebleAsync(value);
+                    OnPropertyChanged(nameof(Treble));
+                }
+            }
+        }
+
+        // Bass range is +/-10
+        public short Bass
+        {
+            get
+            {
+                return ActualPlayer.Bass;
+            }
+            set
+            {
+                if (value != ActualPlayer.Bass)
+                {
+                    var later = ActualPlayer.SetBassAsync(value);
+                    OnPropertyChanged(nameof(Bass));
+                }
+            }
+        }
+
+        public bool NightMode
+        {
+            get
+            {
+                return ActualPlayer.NightMode;
+            }
+            set
+            {
+                if (value != ActualPlayer.NightMode)
+                {
+                    var later = ActualPlayer.SetNightModeAsync(value);
+                    OnPropertyChanged(nameof(NightMode));
+                }
+            }
+        }
+
+        public bool SpeechEnhancement
+        {
+            get
+            {
+                return ActualPlayer.DialogLevel != 0;
+            }
+            set
+            {
+                if (value != (ActualPlayer.DialogLevel != 0))
+                {
+                    var later = ActualPlayer.SetDialogLevelAsync((short)(value ? 1 : 0));
+                    OnPropertyChanged(nameof(SpeechEnhancement));
+                }
+            }
+        }
+
+        public ICommand ResetCommand { get; private set; }
+
+        private class DoResetCommand(Player player) : ICommand
+        {
+            public event EventHandler? CanExecuteChanged;
+
+            public bool CanExecute(object? parameter)
+            {
+                return true;
+            }
+
+            public void Execute(object? parameter)
+            {
+                var later = player.ResetEQAsync();
+            }
+        }
+
+        // Balance range is +/-100
+        public short Balance
+        {
+            get
+            {
+                return ActualPlayer.Balance;
+            }
+            set
+            {
+                if (value != ActualPlayer.Balance)
+                {
+                    var later = ActualPlayer.SetBalanceAsync(value);
+                    OnPropertyChanged(nameof(Balance));
+                }
+            }
         }
     }
 }

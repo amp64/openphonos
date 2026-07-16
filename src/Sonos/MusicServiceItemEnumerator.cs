@@ -48,9 +48,9 @@ namespace OpenPhonos.Sonos
             SearchId = search;
         }
 
-        public async Task<int> CountAsync(PlayerCallbacks callbacks)
+        public Task<int> CountAsync(PlayerCallbacks callbacks)
         {
-            throw new NotImplementedException();
+            return Task.FromResult(-1);
         }
 
         public IMusicItemEnumerator GetChildrenEnumerator(MusicItem parent)

@@ -13,7 +13,7 @@ using System.Windows.Input;
 
 namespace PhonosAvalon.ViewModels
 {
-    public class GroupViewModel : ObservableObject
+    public class GroupViewModel : ObservableObject, IComparable<GroupViewModel>
     {
         public static bool WatchDeviceEvents = true;
 
@@ -22,6 +22,9 @@ namespace PhonosAvalon.ViewModels
         private ICommand _PlayNextCommand;
         private ICommand _AddToQueueCommand;
         private ICommand _ReplaceQueueCommand;
+        private ICommand _AddToPlaylistCommand;
+        private ICommand _RemoveItemCommand;
+        private ICommand _AddToFavoritesCommand;
         private readonly Household _Household;
         protected NowPlayingViewModel _NowPlaying;
         protected MusicPickerViewModel _MusicSource;
@@ -46,6 +49,10 @@ namespace PhonosAvalon.ViewModels
         public ICommand PlayNextCommand => _PlayNextCommand;
         public ICommand AddToQueueCommand => _AddToQueueCommand;
         public ICommand ReplaceQueueCommand => _ReplaceQueueCommand;
+        public ICommand AddToPlaylistCommand => _AddToPlaylistCommand;
+        public ICommand RemoveItemCommand => _RemoveItemCommand;
+
+        public ICommand AddToFavoritesCommand => _AddToFavoritesCommand;
 
         private bool _GroupEditorInvalid;
         private GroupEditorViewModel? _GroupEditor;
@@ -53,7 +60,9 @@ namespace PhonosAvalon.ViewModels
 
         public ObservableCollection<PlayerViewModel> Players { get; }
 
-        public GroupViewModel(Group group, Household h)
+        public int HouseholdIndex { get; private set; }
+
+        public GroupViewModel(Group group, Household h, int hhIndex)
         {
             ActualGroup = group;
             ActualGroup.VisiblePlayers.CollectionChanged += VisiblePlayers_CollectionChanged;
@@ -70,18 +79,32 @@ namespace PhonosAvalon.ViewModels
             }
             _NowPlaying.PropertyChanged += (s, e) =>
             {
-                if (e.PropertyName == nameof(NowPlayingViewModel.TrackNumber) || e.PropertyName==nameof(NowPlayingViewModel.PlayState))
+                if (e.PropertyName == nameof(NowPlayingViewModel.TrackNumber))
                 {
-                    _Queue.TrackChanged(_NowPlaying.AVTransportUri, _NowPlaying.TrackNumber, _NowPlaying.PlayState);
+                    _Queue.TrackChanged(_NowPlaying.AVTransportUri, _NowPlaying.TrackNumber);
+                }
+                else if (e.PropertyName == nameof(NowPlayingViewModel.PlayState))
+                {
+                    _Queue.PlayStateChanged(_NowPlaying.AVTransportUri, _NowPlaying.PlayState);
+                }
+                else if (e.PropertyName == nameof(NowPlayingViewModel.Error) && _NowPlaying.Error && !string.IsNullOrEmpty(_NowPlaying.ErrorMessage))
+                {
+                    _Household.NotifyUser(new Household.HouseholdEventArgs(_NowPlaying.ErrorMessage));
+                    _NowPlaying.Error = false;
                 }
             };
 
-            _PlayNowCommand = new PlayCommand(Coordinator, PlayType.PlayNow);
-            _PlayNextCommand = new PlayCommand(Coordinator, PlayType.PlayNext);
-            _AddToQueueCommand = new PlayCommand(Coordinator, PlayType.AddToQueue);
-            _ReplaceQueueCommand = new PlayCommand(Coordinator, PlayType.ReplaceQueue);
+            _PlayNowCommand = new PlayCommand(this, PlayType.PlayNow);
+            _PlayNextCommand = new PlayCommand(this, PlayType.PlayNext);
+            _AddToQueueCommand = new PlayCommand(this, PlayType.AddToQueue);
+            _ReplaceQueueCommand = new PlayCommand(this, PlayType.ReplaceQueue);
+            _AddToPlaylistCommand = new CustomCommand(this, AddToPlaylistAsync);
+            _RemoveItemCommand = new CustomCommand(this, RemoveItemAsync);
+            _AddToFavoritesCommand = new CustomCommand(this, AddToFavoritesAsync);
 
             Players = new ObservableCollection<PlayerViewModel>(ActualGroup.VisiblePlayers.Select(p => new PlayerViewModel(p)));
+
+            HouseholdIndex = hhIndex;
         }
 
         private void VisiblePlayers_CollectionChanged(object? sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
@@ -89,13 +112,17 @@ namespace PhonosAvalon.ViewModels
             switch (e.Action)
             {
                 case System.Collections.Specialized.NotifyCollectionChangedAction.Add:
-                    var vm = new PlayerViewModel(e.NewItems[0] as Player);
+                    var p = e.NewItems![0] as Player;
+                    var vm = new PlayerViewModel(p);
                     Players.Add(vm);
+                    p.PropertyChanged += Player_PropertyChanged;
                     break;
                 case System.Collections.Specialized.NotifyCollectionChangedAction.Remove:
-                    var existing = FindPlayerVM(e.OldItems[0] as Player);
+                    var oldp = e.OldItems![0] as Player;
+                    var existing = FindPlayerVM(oldp);
                     if (existing != null)
                     {
+                        oldp.PropertyChanged -= Player_PropertyChanged;
                         Players.Remove(existing);
                     }
                     break;
@@ -106,6 +133,7 @@ namespace PhonosAvalon.ViewModels
 
             _GroupEditorInvalid = true;
             OnPropertyChanged(nameof(Summary));
+            OnPropertyChanged(nameof(FullSummary));
         }
 
         public async Task SubscribeAsync()
@@ -118,6 +146,7 @@ namespace PhonosAvalon.ViewModels
                 };
                 ActualGroup.Coordinator.PropertyChanged += Coordinator_PropertyChanged;
                 ActualGroup.Coordinator.QueueChangedEvent += Queue.QueueChanged;
+                ActualGroup.Coordinator.ContentChangedEvent += _MusicSource.ContentChanged;
                 await ActualGroup.Coordinator.SubscribeToEventsAsync(Listener.MinimumTimeout, what);
             }
 
@@ -233,7 +262,7 @@ namespace PhonosAvalon.ViewModels
             if (result >= 0)
             {
                 Debug.WriteLine("adjusted {0} to {1} got {2}", oldVolume, newVolume, result);
-                Debug.Assert(newVolume == result);
+                //Debug.Assert(newVolume == result);
                 return (ushort)result;
             }
             else
@@ -258,7 +287,12 @@ namespace PhonosAvalon.ViewModels
 
         virtual public string Summary
         {
-            get => ActualGroup.Summary();
+            get => ActualGroup.Summary(false);
+        }
+
+        virtual public string FullSummary
+        {
+            get => ActualGroup.Summary(true);
         }
 
         private bool _Muted;
@@ -306,11 +340,82 @@ namespace PhonosAvalon.ViewModels
             return ActualGroup.FindPlayerById(p.UniqueName) != null;
         }
 
+        private bool _playlistPopupOpen;
+        public bool PlaylistPopupOpen
+        {
+            get { return _playlistPopupOpen; }
+            set
+            {
+                SetProperty(ref _playlistPopupOpen, value);
+            }
+        }
+
+        private async Task AddToPlaylistAsync(Player player, MusicItem item)
+        {
+            // This code has to prompt the user for which playlist,
+            // then add this item to it later via DoSaveToPlaylistAsync
+
+            MusicSource.Playlists.ItemToAdd = item;
+            PlaylistPopupOpen = true;
+
+            // If the playlists have changed, get a fresh copy
+            await MusicSource.Playlists.RefreshAsync();
+        }
+
+        private async Task AddToFavoritesAsync(Player player, MusicItem item)
+        {
+            _Household.NotifyUser(new Household.HouseholdEventArgs($"Adding Sonos Favorite '{item.Title}'..."));
+
+            await player.AddToFavoritesAsync(item);
+
+            _Household.NotifyUser(new Household.HouseholdEventArgs($"Sonos Favorite '{item.Title}' added"));
+        }
+
+        internal async Task DoAndReportErrors(Func<Task> function)
+        {
+            try
+            {
+                await function.Invoke();
+            }
+            catch (Exception ex)
+            {
+                _Household.NotifyUser(new Household.HouseholdEventArgs(ex.Message));
+            }
+        }
+
+        private async Task RemoveItemAsync(Player player, MusicItem item)
+        {
+            if (item is UPnPMusicItem uPnP)
+            {
+                await player.RemoveItemAsync(uPnP);
+            }
+            else
+            {
+                throw new Exception("Internal error: cannot delete that");
+            }
+        }
+
         internal void FillWithFakes()
         {
             _NowPlaying = new FakeNowPlayingViewModel();
             _GroupVolume = new FakeGroupVolumeViewModel();
             _Queue = new FakeQueueViewModel();
+        }
+
+        public int CompareTo(GroupViewModel? other)
+        {
+            if (other == null)
+            {
+                return 1;
+            }
+
+            // We sort by HH name first, then by Name
+            int cmp = this._Household.HouseholdId.CompareTo(other._Household.HouseholdId);
+            if (cmp == 0)
+            {
+                cmp = this.Summary.CompareTo(other.Summary);
+            }
+            return cmp;
         }
     }
 
@@ -330,6 +435,7 @@ namespace PhonosAvalon.ViewModels
 
         private string _Summary;
         public override string Summary => _Summary;
+        public override string FullSummary => _Summary;
     }
 
     public class FakeGroupVolumeViewModel : ViewModelBase, IVolume

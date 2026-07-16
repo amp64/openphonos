@@ -196,6 +196,9 @@ namespace OpenPhonos.UPnP
             request.RequestUri = target;
 
             var resp = await CreateHttpClientOnce().SendAsync(request);
+            if (resp.StatusCode == HttpStatusCode.Forbidden)
+                throw new UPnPForbiddenException();
+            resp.EnsureSuccessStatusCode();
             // resp.Content.ReadAsStringAsync() will fail here for some mysterious reason so read as a stream instead
             var st = await resp.Content.ReadAsStreamAsync();
             return XElement.Load(st);
@@ -274,6 +277,15 @@ namespace OpenPhonos.UPnP
                     {
                         listener.SetTimeout(values.First());
                         Debug.WriteLine("Renewal ok for {0}", (object)listener.InternalName);
+                        return true;
+                    }
+                    else if (resp.StatusCode == HttpStatusCode.PreconditionFailed && listener.Sid != string.Empty)
+                    {
+                        // old SID no good any more (eg was Suspended, sat at Breakpoint etc) so start over
+                        NetLogger.WriteLine("Try-Renewal after Precon for {0} {1}", listener.Sid, listener.InternalName);
+                        // Zeros SID to avoid infinite recursion
+                        listener.Clear();
+                        await listener.ReSubscribe_Async();
                         return true;
                     }
                     else
@@ -372,7 +384,7 @@ namespace OpenPhonos.UPnP
                     Debug.WriteLine("FAILED Unsubscribe on {0}", (object)EventAddress);
                 }
             }
-            Debug.WriteLine("Disconnected on {0} ({1})", eventListener.InternalName, eventListener.ListenerId);
+            Debug.WriteLine("Disconnected on {0} ({1})", eventListener?.InternalName, eventListener?.ListenerId);
         }
 
         public async Task UnsubscribeAsync(Listener.EventHandler callback)

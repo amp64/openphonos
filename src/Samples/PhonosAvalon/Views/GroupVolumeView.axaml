@@ -4,11 +4,28 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
         x:Class="PhonosAvalon.Views.GroupVolumeView"
+		xmlns:ic="using:FluentIcons.Avalonia.MarkupExtensions"
 		xmlns:vm="clr-namespace:PhonosAvalon.ViewModels"
 		xmlns:view="clr-namespace:PhonosAvalon.Views;assembly=PhonosAvalon"
 		x:DataType="vm:GroupViewModel"
+		x:Name="Page"
         >
-	<Grid Margin="8">
+	<UserControl.Resources>
+		<view:AllSameConverter x:Key="AllSameConverter"/>
+		<view:AllSameConverterToIcon x:Key="AllSameConverterToIcon" TrueIcon="ArrowSortUpLines" FalseIcon="LineHorizontal3"/>
+	</UserControl.Resources>
+
+	<UserControl.Styles>
+		<!-- This is to remove the highlighting done on Selected and Hover items -->
+		<Style Selector="ListBoxItem:selected /template/ ContentPresenter">
+			<Setter Property="Background" Value="Transparent"/>
+		</Style>
+		<Style Selector="ListBoxItem:pointerover /template/ ContentPresenter">
+			<Setter Property="Background" Value="Transparent"/>
+		</Style>
+	</UserControl.Styles>
+
+	<Grid Margin="4">
 		<Grid.RowDefinitions>
 			<RowDefinition Height="Auto"/>
 			<RowDefinition Height="0"/>
@@ -27,7 +44,30 @@
 			<ListBox.ItemTemplate>
 				<DataTemplate>
 					<Border BorderThickness="0" BorderBrush="White" Padding="2">
-						<view:VolumeView Title="{Binding RoomName}" Battery="{Binding BatteryState}"/>
+						<Grid ColumnDefinitions="*,Auto" RowDefinitions="Auto,Auto">
+							<view:VolumeView Title="{Binding RoomName}" Battery="{Binding BatteryState}"/>
+							<Button Grid.Column="1"
+								Classes="IconStyle"
+								ToolTip.Tip="EQ"
+								Click="EQButton_Clicked">
+								<Button.Content>
+									<MultiBinding Converter="{StaticResource AllSameConverterToIcon}">
+										<Binding/>
+										<Binding ElementName="Page" Path="CurrentEQ"/>
+									</MultiBinding>									
+								</Button.Content>
+							</Button>
+							<Border Grid.Row="1" Grid.ColumnSpan="2"
+								Margin="8,0,8,0" Padding="8" BorderBrush="Black" BorderThickness="1.5">
+								<Border.IsVisible>
+									<MultiBinding Converter="{StaticResource AllSameConverter}">
+										<Binding/>
+										<Binding ElementName="Page" Path="CurrentEQ"/>
+									</MultiBinding>
+								</Border.IsVisible>
+								<view:EQView/>
+							</Border>
+						</Grid>
 					</Border>
 				</DataTemplate>
 			</ListBox.ItemTemplate>

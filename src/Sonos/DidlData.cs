@@ -169,7 +169,7 @@ namespace OpenPhonos.Sonos
             DidlData tv = new DidlData();
             tv.Id = "spdif-input";
             tv.Class = "object.item.audioItem";
-            tv.Res = "x-sonos-htastream:" + device.UniqueName.Substring(5) + ":spdif";
+            tv.Res = "x-sonos-htastream:" + device.UniqueName + ":spdif";
             tv.Title = StringResource.Get("NPTV");
             return tv;
         }
@@ -220,6 +220,7 @@ namespace OpenPhonos.Sonos
             return string.Format("<{0}>{1}</{0}>", name, SecurityElement.Escape(value));
         }
 
+        // Note: not suitable for music service items due to the desc
         internal static string CreateItem(string id, string parent, string title, string classname)
         {
             string item = id != null ? "<item id=\"" + SecurityElement.Escape(id) + "\" parentID=\"" + SecurityElement.Escape(parent) + "\" restricted=\"true\">" : "<item>";
@@ -307,6 +308,23 @@ namespace OpenPhonos.Sonos
             }
 
             return uri;
+        }
+
+        // Crude way of removing an element from a serialized XML item
+        internal static string RemoveElement(string md, string name)
+        {
+            string tagBegin = $"<{name}>";
+            int begin = md.IndexOf(tagBegin);
+            if (begin > 0)
+            {
+                string tagEnd = $"</{name}>";
+                int end = md.IndexOf(tagEnd, begin + tagBegin.Length);
+                if (end >= 0)
+                {
+                    return md.Remove(begin, end - begin + tagEnd.Length);
+                }
+            }
+            return md;
         }
     }
 }

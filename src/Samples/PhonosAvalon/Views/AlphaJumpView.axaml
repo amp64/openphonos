@@ -1,0 +1,51 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+			 xmlns:vm="clr-namespace:PhonosAvalon.ViewModels"
+			 x:DataType="vm:AlphaJumpViewModel"
+             x:Class="PhonosAvalon.Views.AlphaJumpView">
+	<UserControl.Styles>
+		<Style Selector="Button">
+			<Setter Property="Width" Value="32"/>
+			<Setter Property="Height" Value="32"/>
+			<Setter Property="Margin" Value="0"/>
+			<Setter Property="BorderThickness" Value="1"/>
+			<Setter Property="FontSize" Value="12"/>
+			<Setter Property="HorizontalContentAlignment" Value="Center"/>
+			<Setter Property="VerticalContentAlignment" Value="Center"/>
+			<Setter Property="Command" Value="{Binding JumpCommand}"/>
+			<Setter Property="Padding" Value="0"/>
+		</Style>
+	</UserControl.Styles>
+	<WrapPanel>
+		<Button Content="0" CommandParameter="0"/>
+		<Button Content="A" CommandParameter="A"/>
+		<Button Content="B" CommandParameter="B"/>
+		<Button Content="C" CommandParameter="C"/>
+		<Button Content="D" CommandParameter="D"/>
+		<Button Content="E" CommandParameter="E"/>
+		<Button Content="F" CommandParameter="F"/>
+		<Button Content="G" CommandParameter="G"/>
+		<Button Content="H" CommandParameter="H"/>
+		<Button Content="I" CommandParameter="I"/>
+		<Button Content="J" CommandParameter="J"/>
+		<Button Content="K" CommandParameter="K"/>
+		<Button Content="L" CommandParameter="L"/>
+		<Button Content="M" CommandParameter="M"/>
+		<Button Content="N" CommandParameter="N"/>
+		<Button Content="O" CommandParameter="O"/>
+		<Button Content="P" CommandParameter="P"/>
+		<Button Content="Q" CommandParameter="Q"/>
+		<Button Content="R" CommandParameter="R"/>
+		<Button Content="S" CommandParameter="S"/>
+		<Button Content="T" CommandParameter="T"/>
+		<Button Content="U" CommandParameter="U"/>
+		<Button Content="V" CommandParameter="V"/>
+		<Button Content="W" CommandParameter="W"/>
+		<Button Content="X" CommandParameter="X"/>
+		<Button Content="Y" CommandParameter="Y"/>
+		<Button Content="Z" CommandParameter="Z"/>
+	</WrapPanel>
+</UserControl>

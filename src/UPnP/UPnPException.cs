@@ -64,4 +64,18 @@ namespace OpenPhonos.UPnP
             Address = address;
         }
     }
+
+    public partial class UPnPForbiddenException : Exception
+    {
+        public override string Message => message;
+
+        public UPnPForbiddenException()
+        {
+            message = "UPnP forbidden";
+            UpdateMessage();
+        }
+
+        partial void UpdateMessage();
+        private string message;
+    }
 }

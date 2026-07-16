@@ -8,5 +8,5 @@
         x:Class="PhonosAvalon.Views.MainWindow"
         Icon="/Assets/avalonia-logo.ico"
         Title="PhonosAvalon">
-        <views:MainView />
+        <views:AdaptableView />
 </Window>

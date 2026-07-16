@@ -197,7 +197,7 @@ namespace OpenPhonos.Sonos
         {
             var player = callbacks.Player;
 
-            await player.ClearQueue();
+            await player.ClearQueueAsync();
             uint index = await player.QueueSize() + 1;
             List<string> md = new List<string>();
             List<string> res = new List<string>();

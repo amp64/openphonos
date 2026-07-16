@@ -48,6 +48,8 @@ namespace OpenPhonos.Sonos
 
         internal const string SonosUserAgent = SonosUserAgent1414;
 
+        public static bool ForceHttps = false;
+
         /// <summary>
         /// Implementers need to provide an implementation of this for full Music Service support
         /// </summary>
@@ -67,53 +69,47 @@ namespace OpenPhonos.Sonos
 
         /// <summary>
         /// Only call this once per instance
+        /// Will throw on failure
         /// </summary>
         /// <param name="player">A player from the household</param>
         /// <returns></returns>
         public async Task InitializeAsync(Player player)
         {
-            try
-            {
-                var hh = await player.DeviceProperties.GetHouseholdID();
-                hh.ThrowIfFailed();
-                HouseholdId = hh.CurrentHouseholdID;
+            var hh = await player.DeviceProperties.GetHouseholdID();
+            hh.ThrowIfFailed();
+            HouseholdId = hh.CurrentHouseholdID;
 
-                var servicelist = await player.MusicServices.ListAvailableServices();
-                servicelist.ThrowIfFailed();
+            var servicelist = await player.MusicServices.ListAvailableServices();
+            servicelist.ThrowIfFailed();
 
-                var ids = servicelist.AvailableServiceTypeList.Split(',');
-                var availableIds = ids.Select(id => int.Parse(id));
+            var ids = servicelist.AvailableServiceTypeList.Split(',');
+            var availableIds = ids.Select(id => int.Parse(id));
 
-                var dev = await player.SystemProperties.GetString("R_TrialZPSerial");
-                DeviceId = dev.Error == null ? dev.StringValue : null;
+            var dev = await player.SystemProperties.GetString("R_TrialZPSerial");
+            DeviceId = dev.Error == null ? dev.StringValue : null;
 
-                var xml = XElement.Parse(servicelist.AvailableServiceDescriptorList);
-                MusicServiceList =
-                    from svc in xml.Descendants(XName.Get("Service"))
-                    select new MusicServiceDescription()
-                    {
-                        XmlId = Int16.Parse(svc.Attribute(XName.Get("Id")).Value),
-                        Name = svc.Attribute(XName.Get("Name")).Value,
-                        Version = svc.Attribute(XName.Get("Version")).Value,
-                        Uri = svc.Attribute(XName.Get("Uri")).Value,
-                        SecureUri = svc.Attribute(XName.Get("SecureUri")).Value,
-                        ContainerType = svc.Attribute(XName.Get("ContainerType")).Value,
-                        Capabilities = int.Parse((string)svc.Attribute(XName.Get("Capabilities"))),
-                        Auth = svc.Descendants(XName.Get("Policy")).Attributes(XName.Get("Auth")).FirstOrDefault().Value,
-                        StringsUri = CalcPresentation(svc, "Strings"),
-                        PresentationUri = CalcPresentation(svc, "PresentationMap"),
-                        ManifestUri = (string)svc.Descendants(XName.Get("Manifest")).FirstOrDefault()?.Attribute(XName.Get("Uri")),
-                    };
+            var xml = XElement.Parse(servicelist.AvailableServiceDescriptorList);
+            MusicServiceList =
+                from svc in xml.Descendants(XName.Get("Service"))
+                select new MusicServiceDescription()
+                {
+                    XmlId = Int16.Parse(svc.Attribute(XName.Get("Id")).Value),
+                    Name = svc.Attribute(XName.Get("Name")).Value,
+                    Version = svc.Attribute(XName.Get("Version")).Value,
+                    Uri = svc.Attribute(XName.Get("Uri")).Value,
+                    SecureUri = svc.Attribute(XName.Get("SecureUri")).Value,
+                    ContainerType = svc.Attribute(XName.Get("ContainerType")).Value,
+                    Capabilities = int.Parse((string)svc.Attribute(XName.Get("Capabilities"))),
+                    Auth = svc.Descendants(XName.Get("Policy")).Attributes(XName.Get("Auth")).FirstOrDefault().Value,
+                    StringsUri = CalcPresentation(svc, "Strings"),
+                    PresentationUri = CalcPresentation(svc, "PresentationMap"),
+                    ManifestUri = (string)svc.Descendants(XName.Get("Manifest")).FirstOrDefault()?.Attribute(XName.Get("Uri")),
+                };
 
 #if DEBUG
-                var debug = DumpMusicList(MusicServiceList);
+            var debug = DumpMusicList(MusicServiceList);
 #endif
-                AvailableServices = new List<MusicService>();
-            }
-            catch (Exception ex)
-            {
-                Debug.WriteLine("{0} during MusicServicesInit", (object)(ex.Message));
-            }
+            AvailableServices = new List<MusicService>();
         }
 
         private static string CalcPresentation(XElement svc, string itemName)
@@ -157,7 +153,7 @@ namespace OpenPhonos.Sonos
             if (logo != null)
             {
                 logo = logo.Trim();
-                if(logo.StartsWith("http://"))
+                if (ForceHttps && logo.StartsWith("http://"))
                 {
                     // Force https for the logos 
                     logo = "https://" + logo.Substring(7);
@@ -172,6 +168,24 @@ namespace OpenPhonos.Sonos
             if (services != null)
             {
                 var svc = services.FirstOrDefault(s => s.Udn == udn);
+                if (svc != null)
+                {
+                    await svc.InitializeAsync();
+                }
+                return svc;
+            }
+            else
+            {
+                return null;
+            }
+        }
+
+        public async Task<MusicService> GetServiceByServiceIdAsync(int id)
+        {
+            var services = AvailableServices;
+            if (services != null)
+            {
+                var svc = services.FirstOrDefault(s => s.ServiceId == id);
                 if (svc != null)
                 {
                     await svc.InitializeAsync();
@@ -225,10 +239,15 @@ namespace OpenPhonos.Sonos
 
         public async Task<string> GetErrorMessageAsync(string serviceId, string which)
         {
-            var std = await GetServiceBySnAsync(serviceId);
-            if (std == null)
-                return null;
-            return std.LookupLocalizedString(which);
+            if (int.TryParse(serviceId, out int id))
+            {
+                var std = await GetServiceByServiceIdAsync(id);
+                if (std != null)
+                {
+                    return std.LookupLocalizedString(which);
+                }
+            }
+            return null;
         }
 
 
@@ -275,7 +294,8 @@ namespace OpenPhonos.Sonos
                 var client = UPnP.Service.CreateClient(SonosUserAgent, true);
                 client.DefaultRequestHeaders.Add("X-Sonos-SWGen", "1");
                 client.MaxResponseContentBufferSize = 512 * 1024;
-                string artfile = await client.GetStringAsync("https://update-services.sonos.com/services/mslogo.xml");
+                string logos = ForceHttps ? "https://update-services.sonos.com/services/mslogo.xml" : "http://update-services.sonos.com/services/mslogo.xml";
+                string artfile = await client.GetStringAsync(logos);
                 var artxml = XElement.Parse(artfile);
                 artlist = artxml.Descendants(XName.Get("sized")).Descendants(XName.Get("service"));
             }
@@ -466,7 +486,7 @@ namespace OpenPhonos.Sonos
                     Auth = "Radio",
                     Capabilities = 0,
                     Name = "Radio",
-                    Uri = "https://legato.radiotime.com/Radio.asmx",
+                    Uri =  ForceHttps ? "https://legato.radiotime.com/Radio.asmx" : "http://legato.radiotime.com/Radio.asmx",
                     XmlId = ((TuneInId ^ 7) >> 8),
                 };
             }

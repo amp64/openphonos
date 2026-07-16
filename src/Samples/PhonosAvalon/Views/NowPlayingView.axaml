@@ -29,8 +29,8 @@
 		</Style>
 	</UserControl.Styles>
 
-	<StackPanel Orientation="Vertical" HorizontalAlignment="Left" Margin="32">
-		<TextBlock Text="{Binding Summary, FallbackValue=Starting...}" FontSize="22" Margin="0,0,0,8"/>
+	<StackPanel Orientation="Vertical" HorizontalAlignment="Left" Margin="32,16,32,16">
+		<TextBlock IsVisible="False" Text="{Binding FullSummary, FallbackValue=Starting...}" FontSize="22" Margin="0,0,0,8" MaxLines="2" TextWrapping="Wrap"/>
 		<TextBlock Text="{Binding NowPlaying.TrackDescription}" Classes="NPTitle"/>
 		<StackPanel Orientation="Horizontal">
 			<TextBlock Text="{Binding NowPlaying.TrackTitle}" Classes="NPItem"/>

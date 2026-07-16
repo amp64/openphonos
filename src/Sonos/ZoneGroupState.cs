@@ -18,6 +18,8 @@ namespace OpenPhonos.Sonos
             public string Invisible;
             public string MoreInfo;
             public string ActiveZoneID;
+            public string EthLink;
+            public string ChannelFreq;
 
             public override string ToString()
             {
@@ -31,6 +33,11 @@ namespace OpenPhonos.Sonos
             public string LastSeen;
             public string Reason;
             public string ModelInfo;
+        }
+
+        public class ZoneGroupMemberDataQuarantined : ZoneGroupMemberData
+        {
+            public string QuarantineReason;
         }
 
         public class ZoneGroupData
@@ -116,6 +123,20 @@ namespace OpenPhonos.Sonos
             return devices;
         }
 
+        private static IEnumerable<ZoneGroupMemberDataQuarantined> ParseQuarantinedDevices(XElement elements)
+        {
+            var devices = from device in elements.Descendants(XName.Get("QuarantinedDevices")).Descendants(XName.Get("Device"))
+                          select new ZoneGroupMemberDataQuarantined()
+                          {
+                              Name = (string)device.Attribute("ZoneName"),
+                              Location = (string)device.Attribute("Location"),
+                              Uuid = (string)device.Attribute("UUID"),
+                              MoreInfo = (string)device.Attribute("MoreInfo"),
+                              QuarantineReason = (string)device.Attribute("QuarantineReason"),
+                          };
+            return devices;
+        }
+
         private static List<ZoneGroupMemberData> ParseZoneGroupMembers(IEnumerable<XElement> descendants)
         {
             var members = from item in descendants
@@ -126,23 +147,28 @@ namespace OpenPhonos.Sonos
                               Name = (string)item.Attribute(XName.Get("ZoneName")),
                               Invisible = (string)item.Attribute(XName.Get("Invisible")),
                               MoreInfo = (string)item.Attribute(XName.Get("MoreInfo")),
-                              ActiveZoneID = (string)item.Attribute(XName.Get("ActiveZoneID"))
+                              ActiveZoneID = (string)item.Attribute(XName.Get("ActiveZoneID")),
+                              EthLink = (string)item.Attribute(XName.Get("EthLink")),
+                              ChannelFreq = (string)item.Attribute(XName.Get("ChannelFreq"))
                           };
 
             return members.ToList();
         }
 
         readonly private List<ZoneGroupData> Zones;
+        private List<ZoneGroupMemberDataQuarantined> QuarantinedPlayers;
         private List<ZoneGroupMemberDataVanished> VanishedPlayers;
 
         public IReadOnlyList<ZoneGroupData> Groups { get => Zones; }
         public IReadOnlyList<ZoneGroupMemberDataVanished> Vanished { get => VanishedPlayers; }
+        public IReadOnlyList<ZoneGroupMemberDataQuarantined> Quarantined { get => QuarantinedPlayers; }
 
         public ZoneGroupState(string zonestate)
         {
             var xml = XElement.Parse(zonestate);
             Zones = ParseZoneGroupState(xml).ToList();
             VanishedPlayers = ParseVanishedDevices(xml).ToList();
+            QuarantinedPlayers = ParseQuarantinedDevices(xml).ToList();
         }
 
         public ZoneGroupState() : this("<ZoneGroupState></ZoneGroupState>")

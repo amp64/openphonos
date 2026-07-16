@@ -1,0 +1,51 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+			 xmlns:vm="clr-namespace:PhonosAvalon.ViewModels"			 
+			 x:DataType="vm:PlayerViewModel"
+             x:Class="PhonosAvalon.Views.EQView">
+
+  <Grid ColumnDefinitions="60, 30, *, 30" RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto,Auto">
+
+	<!--0 Basic Bass-->
+	<TextBlock IsVisible="{Binding ShowBasic, Mode=OneTime}" Text="Bass" VerticalAlignment="Center"/>
+	<Slider IsVisible="{Binding ShowBasic, Mode=OneTime}" Grid.Column="2" Maximum="10" Minimum="-10" Value="{Binding Bass, Mode=TwoWay}" TickFrequency="1"/>
+	<TextBlock IsVisible="{Binding ShowBasic, Mode=OneTime}" Grid.Column="3" Text="+" VerticalAlignment="Center" HorizontalAlignment="Center"/>
+	<TextBlock IsVisible="{Binding ShowBasic, Mode=OneTime}" Grid.Column="1" Text="-" VerticalAlignment="Center" HorizontalAlignment="Center"/>
+	  
+	<!--1 Basic Treble-->
+	<TextBlock IsVisible="{Binding ShowBasic, Mode=OneTime}" Grid.Row="1" Text="Treble" VerticalAlignment="Center"/>
+	<Slider IsVisible="{Binding ShowBasic, Mode=OneTime}" Grid.Row="1" Grid.Column="2" Maximum="10" Minimum="-10" Value="{Binding Treble, Mode=TwoWay}" TickFrequency="1"/>
+	<TextBlock IsVisible="{Binding ShowBasic, Mode=OneTime}" Grid.Row="1" Grid.Column="3" Text="+" VerticalAlignment="Center" HorizontalAlignment="Center"/>
+	<TextBlock IsVisible="{Binding ShowBasic, Mode=OneTime}" Grid.Row="1" Grid.Column="1" Text="-" VerticalAlignment="Center" HorizontalAlignment="Center"/>
+	
+	<!--2 Balance -->
+	<TextBlock IsVisible="{Binding ShowBalance, Mode=OneTime}" Grid.Row="2" Text="Balance" VerticalAlignment="Center"/>
+	<Slider IsVisible="{Binding ShowBalance, Mode=OneTime}" Grid.Row="2" Grid.Column="2" Maximum="100" Minimum="-100" Value="{Binding Balance, Mode=TwoWay}" TickFrequency="25"/>
+	<TextBlock IsVisible="{Binding ShowBalance, Mode=OneTime}" Grid.Row="2" Grid.Column="3" Text="R" VerticalAlignment="Center" HorizontalAlignment="Center"/>
+	<TextBlock IsVisible="{Binding ShowBalance, Mode=OneTime}" Grid.Row="2" Grid.Column="1" Text="L" VerticalAlignment="Center" HorizontalAlignment="Center"/>
+
+	<!--3 Basic Footer -->
+	<CheckBox IsVisible="{Binding ShowBasic, Mode=OneTime}" Grid.Row="3" Grid.Column="1" Grid.ColumnSpan="2" 
+			  Content="Loudness" HorizontalAlignment="Left"
+			  IsChecked="{Binding Loudness, Mode=TwoWay}"/>
+	<Button IsVisible="{Binding ShowBasic, Mode=OneTime}" Grid.Row="3" Grid.ColumnSpan="3" 
+			Content="Reset" HorizontalAlignment="Right"
+			Command="{Binding ResetCommand}"/>
+  
+	<!--4 Fixed -->
+	<TextBlock IsVisible="{Binding ShowFixed, Mode=OneTime}" Grid.Row="4" Grid.Column="2" HorizontalAlignment="Center"
+			 Text="EQ controls are not available on fixed volume devices."/>
+  
+	<!--5/6 HT Options -->
+	<CheckBox IsVisible="{Binding ShowHT, Mode=OneTime}" Grid.Row="5" Grid.Column="1" Grid.ColumnSpan="2"
+			  Content="Night Sound"
+			  IsChecked="{Binding NightMode, Mode=TwoWay}"/>
+	<CheckBox IsVisible="{Binding ShowHT, Mode=OneTime}" Grid.Row="6" Grid.Column="1" Grid.ColumnSpan="2"
+			  Content="Speech Enhancement"
+			  IsChecked="{Binding SpeechEnhancement, Mode=TwoWay}"/>
+
+  </Grid>
+</UserControl>

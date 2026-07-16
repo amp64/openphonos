@@ -1,17 +1,21 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFramework>net8.0</TargetFramework>
+    <TargetFramework>net9.0</TargetFramework>
     <Nullable>enable</Nullable>
+	<NullabilityInfoContextSupport>true</NullabilityInfoContextSupport>
     <LangVersion>latest</LangVersion>
     <AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
     <Configurations>Debug;Release;Store Release</Configurations>
-    <Platforms>AnyCPU;x64</Platforms>
-    <Version>1.0.3</Version>
+    <Platforms>AnyCPU;x64;ARM64</Platforms>
+    <Version>1.5.3</Version>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Store Release|AnyCPU'">
     <Optimize>True</Optimize>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Store Release|x64'">
+    <Optimize>True</Optimize>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Store Release|ARM64'">
     <Optimize>True</Optimize>
   </PropertyGroup>
 
@@ -26,20 +30,23 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="AsyncImageLoader.Avalonia" Version="3.3.0" />
-    <PackageReference Include="Avalonia" Version="11.1.4" />
-    <PackageReference Include="Avalonia.Themes.Fluent" Version="11.1.4" />
-    <PackageReference Include="Avalonia.Fonts.Inter" Version="11.1.4" />
-    <PackageReference Include="CommunityToolkit.Mvvm" Version="8.2.0" />
+    <PackageReference Include="AsyncImageLoader.Avalonia" Version="3.4.3" />
+    <PackageReference Include="Avalonia" Version="11.3.6" />
+    <PackageReference Include="Avalonia.Themes.Fluent" Version="11.3.6" />
+    <PackageReference Include="Avalonia.Fonts.Inter" Version="11.3.6" />
+    <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.0" />
 
     <!--Condition below is needed to remove Avalonia.Diagnostics package from build output in Release configuration.-->
-    <PackageReference Condition="'$(Configuration)' == 'Debug'" Include="Avalonia.Diagnostics" Version="11.1.4" />
-    <PackageReference Include="DialogHost.Avalonia" Version="0.8.1" />
-    <PackageReference Include="FluentIcons.Avalonia" Version="1.1.255" />
-    <PackageReference Include="Microsoft.Extensions.Logging" Version="8.0.0" />
-    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="8.0.1" />
-    <PackageReference Include="Microsoft.Extensions.Logging.ApplicationInsights" Version="2.22.0" />
-    <PackageReference Include="Microsoft.Extensions.Logging.Debug" Version="8.0.0" />
+    <PackageReference Condition="'$(Configuration)' == 'Debug'" Include="Avalonia.Diagnostics" Version="11.3.6" />
+    <PackageReference Include="Devolutions.AvaloniaTheme.MacOS" Version="2025.9.10" />
+    <PackageReference Include="DialogHost.Avalonia" Version="0.9.3" />
+    <PackageReference Include="FluentIcons.Avalonia" Version="1.1.308" />
+    <PackageReference Include="Material.Avalonia" Version="3.13.1" />
+    <PackageReference Include="Microsoft.Extensions.Logging" Version="9.0.9" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="9.0.9" />
+    <PackageReference Include="Microsoft.Extensions.Logging.ApplicationInsights" Version="2.23.0" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Debug" Version="9.0.9" />
+    <PackageReference Include="SkiaSharp" Version="3.119.1" />
   </ItemGroup>
 
   <ItemGroup>
@@ -48,6 +55,9 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Compile Update="Views\BatteryView.axaml.cs">
+      <DependentUpon>BatteryView.axaml</DependentUpon>
+    </Compile>
     <Compile Update="Views\GroupEditorView.axaml.cs">
       <DependentUpon>GroupEditorView.axaml</DependentUpon>
     </Compile>
@@ -57,10 +67,15 @@
     <Compile Update="Views\GroupVolumeView.axaml.cs">
       <DependentUpon>GroupVolumeView.axaml</DependentUpon>
     </Compile>
-  </ItemGroup>
-
-  <ItemGroup>
-    <UpToDateCheckInput Remove="Views\MobileMainView.axaml" />
+    <Compile Update="Views\DeviceView.axaml.cs">
+      <DependentUpon>DeviceView.axaml</DependentUpon>
+    </Compile>
+	<Compile Update="Views\VolumeView.axaml.cs">
+      <DependentUpon>VolumeView.axaml</DependentUpon>
+	</Compile>
+	<Compile Update="Views\QueueView.axaml.cs">
+      <DependentUpon>QueueView.axaml</DependentUpon>
+	</Compile>
   </ItemGroup>
 
   <ItemGroup>

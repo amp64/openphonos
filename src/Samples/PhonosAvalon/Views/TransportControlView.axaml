@@ -13,32 +13,46 @@
 	<UserControl.Resources>
 		<vm:PlayStateToLabelConverter x:Key="PlayStateToLabelConverter"/>
 		<views:PlayStateToSymbolIconConverter x:Key="PlayStateToSymbolIconConverter"/>
-		<x:Double x:Key="ButtonSize">42</x:Double>
+		<views:RepeatToSymbolIconConverter x:Key="RepeatToSymbolIconConverter"/>
 		<!-- As we use pcdcr icons, we need a dark-ish background for Ratings -->
 		<Color x:Key="RatingBackground">Gray</Color>
+		<views:BoolToSymbolIconConverter x:Key="BoolToShuffleIconConverter" TrueIcon="ArrowShuffle" FalseIcon="ArrowShuffleOff"/>
 	</UserControl.Resources>
 
 	<UserControl.Styles>
 		<Style Selector="Button">
-			<Setter Property="Width" Value="{StaticResource ButtonSize}"/>
-			<Setter Property="Height" Value="{StaticResource ButtonSize}"/>
+			<Setter Property="Width" Value="{DynamicResource IconButtonSize}"/>
+			<Setter Property="Height" Value="{DynamicResource IconButtonSize}"/>
 		</Style>
 	</UserControl.Styles>
 
-	<Grid ColumnDefinitions="42,42,42,42,42" 
+	<Grid
 		  HorizontalAlignment="Center" VerticalAlignment="Bottom">
+		<Grid.ColumnDefinitions>
+			<ColumnDefinition Width="{DynamicResource IconButtonGrid}"/>
+			<ColumnDefinition Width="{DynamicResource IconButtonGrid}"/>
+			<ColumnDefinition Width="{DynamicResource IconButtonGrid}"/>
+			<ColumnDefinition Width="{DynamicResource IconButtonGrid}"/>
+			<ColumnDefinition Width="{DynamicResource IconButtonGrid}"/>
+			<ColumnDefinition Width="{DynamicResource IconButtonGrid}"/>
+			<ColumnDefinition Width="{DynamicResource IconButtonGrid}"/>
+		</Grid.ColumnDefinitions>
+		<Grid.RowDefinitions>
+			<RowDefinition Height="{DynamicResource IconButtonGrid}"/>
+		</Grid.RowDefinitions>
 		
 		<Button x:DataType="vm:RatingsViewModel"
 				Grid.Column="0"
 				DataContext="{Binding TrackRatings[0]}"
 				Command="{Binding SetRatingsCommand}"
+				CornerRadius="{DynamicResource IconButtonRadius}"
 				Classes="IconStyle"
 				IsVisible="{Binding Enabled}"
 				Background="{StaticResource RatingBackground}"
 				ToolTip.Tip="{Binding BeforeMessage}">
 			<Panel>
 				<Image asyncImageLoader:ImageLoader.Source="{Binding Image}"
-					   Width="{StaticResource ButtonSize}" Height="{StaticResource ButtonSize}" Margin="-12"/>
+					   Width="{DynamicResource IconButtonSize}" Height="{DynamicResource IconButtonSize}" Margin="-12"/>
 			</Panel>
 			<Button.Flyout>
 				<Flyout ShowMode="TransientWithDismissOnPointerMoveAway">
@@ -47,14 +61,34 @@
 			</Button.Flyout>
 		</Button>
 
-		<Button Grid.Column="1" 
+		<Button Grid.Column="0" Classes="IconStyle"
+			Content="{ic:SymbolIcon Symbol=SkipBack10}"
+			Command="{Binding SkipCommand}"
+			CommandParameter="-10"
+			IsVisible="{Binding SkipMode}"
+		/>
+				
+		<Button Grid.Column="1"
+				Content="{Binding ShuffleMode, Converter={StaticResource BoolToShuffleIconConverter}}"
+				CornerRadius="{DynamicResource IconButtonRadius}"
+				Classes="IconStyle"
+				Command="{Binding ShuffleCommand}"
+				ToolTip.Tip="Shuffle"
+				IsEnabled="{Binding CanShuffle}"/>
+		<Button Grid.Column="2" 
 				Content="{ic:SymbolIcon Symbol=Previous}"
 				Classes="IconStyle"
+				CornerRadius="{DynamicResource IconButtonRadius}"
 				Command="{Binding PreviousCommand}"
+				ToolTip.Tip="Previous Track"
+				HotKey="MediaPreviousTrack"
 				IsEnabled="{Binding CanPrevious}"/>
-		<Button Grid.Column="2"
+		<Button Grid.Column="3"
 				Classes="IconStyle"
+				CornerRadius="{DynamicResource IconButtonRadius}"
 				Command="{Binding PlayPauseCommand}"
+				HotKey="MediaPlayPause"
+				ToolTip.Tip="Play/Pause"
 				>
 			<Button.Content>
 				<MultiBinding Converter="{StaticResource PlayStateToSymbolIconConverter}">
@@ -70,23 +104,34 @@
 				</MultiBinding>
 			</Button.IsEnabled>
 		</Button>
-		<Button Grid.Column="3"
+		<Button Grid.Column="4"
 				Content="{ic:SymbolIcon Symbol=Next}"
 				Classes="IconStyle"
+				CornerRadius="{DynamicResource IconButtonRadius}"
 				Command="{Binding NextCommand}"
+				ToolTip.Tip="Next Track"
+				HotKey="MediaNextTrack"
 				IsEnabled="{Binding CanNext}"
 				/>
+		<Button Grid.Column="5"
+			Content="{Binding Repeat, Converter={StaticResource RepeatToSymbolIconConverter}}"
+			Classes="IconStyle"
+			CornerRadius="{DynamicResource IconButtonRadius}"
+			Command="{Binding RepeatCommand}"
+			ToolTip.Tip="Repeat"
+			IsEnabled="{Binding CanRepeat}"/>
 		<Button x:DataType="vm:RatingsViewModel"
-				Grid.Column="4"
+				Grid.Column="6"
 				DataContext="{Binding TrackRatings[1]}"
 				Classes="IconStyle"
+				CornerRadius="{DynamicResource IconButtonRadius}"
 				Command="{Binding SetRatingsCommand}"
 				IsVisible="{Binding Enabled}"
 				Background="{StaticResource RatingBackground}"
 				ToolTip.Tip="{Binding BeforeMessage}">
 			<Panel>
 				<Image asyncImageLoader:ImageLoader.Source="{Binding Image}"
-					   Width="{StaticResource ButtonSize}" Height="{StaticResource ButtonSize}" Margin="-12"/>
+					   Width="{DynamicResource IconButtonSize}" Height="{DynamicResource IconButtonSize}" Margin="-12"/>
 			</Panel>
 			<Button.Flyout>
 				<Flyout ShowMode="TransientWithDismissOnPointerMoveAway">
@@ -94,5 +139,11 @@
 				</Flyout>
 			</Button.Flyout>
 		</Button>
+		<Button Grid.Column="6" Classes="IconStyle"
+			Content="{ic:SymbolIcon Symbol=SkipForward30}"
+			Command="{Binding SkipCommand}"
+			CommandParameter="30"
+			IsVisible="{Binding SkipMode}"
+		/>
 	</Grid>
 </UserControl>

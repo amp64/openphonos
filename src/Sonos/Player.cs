@@ -52,6 +52,7 @@ namespace OpenPhonos.Sonos
         [Flags]
         public enum Feature3Flags
         {
+            Balance = 0x20,
             Battery = 0x80
         };
 
@@ -59,6 +60,11 @@ namespace OpenPhonos.Sonos
         /// This is the name set by the user eg "Kitchen"
         /// </summary>
         public string RoomName { get; private set; }
+
+        /// <summary>
+        /// This is the name set by the user with the bound suffix eg "Media (LR)"
+        /// </summary>
+        public string RoomNameWithSuffix { get; private set; }
 
         /// <summary>
         /// This is the unique name of the form RINCON_xxxxxxxxxxxxxx
@@ -117,6 +123,11 @@ namespace OpenPhonos.Sonos
         public string HardwareVersion { get; }
 
         /// <summary>
+        /// Display version
+        /// </summary>
+        public string DisplayVersion { get; }
+
+        /// <summary>
         /// Series id which allows for different versions of the same model
         /// </summary>
         public string SeriesID { get; }
@@ -151,6 +162,13 @@ namespace OpenPhonos.Sonos
         public bool IsMuted { get; private set; }
         public bool IsMissing { get; private set; }
         public bool IsRealPlayer { get; protected set; }
+        public string ParentId { get; protected set; }
+        public short Bass { get; protected set; }
+        public short Treble { get; protected set; }
+        public short Loudness { get; protected set; }
+        public short Balance { get; protected set; }
+        public bool NightMode { get; protected set; }
+        public short DialogLevel { get; protected set; }
 
         public Feature3Flags Feature3 { get; }
         public bool HasBattery { get => (Feature3 & Feature3Flags.Battery) != 0; }
@@ -173,6 +191,13 @@ namespace OpenPhonos.Sonos
             return player;
         }
 
+        public static async Task<Player> CreatePlayerAsync(Device device, ZoneGroupState.ZoneGroupMemberData info)
+        {
+            var player = new Player(device, info.Name, info.Uuid, info.Invisible=="1");
+            await player.InitializeAsync(true);
+            return player;
+        }
+
         public async Task SetVolumeAsync(int newVolume)
         {
             if (this.RenderingControl != null)
@@ -189,11 +214,54 @@ namespace OpenPhonos.Sonos
             }
         }
 
+        public async Task SetBassAsync(short newBass)
+        {
+            this.Bass = newBass;
+            await this.RenderingControl.SetBass(0, newBass);
+        }
+
+        public async Task SetTrebleAsync(short newTreble)
+        {
+            this.Treble = newTreble;
+            await this.RenderingControl.SetTreble(0, newTreble);
+        }
+
+        public async Task SetLoudnessAsync(bool loud)
+        {
+            this.Loudness = loud ? (short)1 : (short)0;
+            await this.RenderingControl.SetLoudness(0, "Master", loud);
+        }
+
+        public async Task SetBalanceAsync(short newBalance)
+        {
+            ushort lf = (ushort)((newBalance <= 0) ? 100 : 100 - newBalance);
+            ushort rf = (ushort)((newBalance >= 0) ? 100 : 100 + newBalance);
+
+            await this.RenderingControl.SetVolume(0, "LF", lf);
+            await this.RenderingControl.SetVolume(0, "RF", rf);
+        }
+
+        public async Task ResetEQAsync()
+        {
+            // This is the old API, newer ones have more args, but this works on everything
+            await this.RenderingControl.ResetBasicEQ(0).Optional();
+        }
+
+        public async Task SetNightModeAsync(bool nightMode)
+        {
+            await this.RenderingControl.SetEQ(0, "NightMode", (short)(nightMode ? 1 : 0)).Optional();
+        }
+
+        public async Task SetDialogLevelAsync(short level)
+        {
+            await this.RenderingControl.SetEQ(0, "DialogLevel", level).Optional();
+        }
+
         public async Task<int> SetRelativeGroupVolumeAsync(int deltaVolume)
         {
             if (GroupRenderingControl != null)
             {
-                var result = await this.GroupRenderingControl.SetRelativeGroupVolume(0, deltaVolume);
+                var result = await this.GroupRenderingControl.SetRelativeGroupVolume(0, deltaVolume); 
                 result.ThrowIfFailed();
                 return result.NewVolume;
             }
@@ -224,6 +292,12 @@ namespace OpenPhonos.Sonos
             Invisible = invisible;
         }
 
+        public void Update(ZoneGroupState.ZoneGroupMemberData info)
+        {
+            EthLink = info.EthLink;
+            ChannelFreq = info.ChannelFreq;
+        }
+
         /// <summary>
         /// Create a new Sonos Player device from a UPnP device and a few other items
         /// Will throw if the device is not capable
@@ -246,9 +320,22 @@ namespace OpenPhonos.Sonos
             return queue.TotalMatches;
         }
 
-        public async Task ClearQueue()
+        public async Task ClearQueueAsync()
         {
             await AVTransport.RemoveAllTracksFromQueue(0).Required();
+        }
+
+        public async Task SaveQueueAsNewPlaylistAsync(string name)
+        {
+            // This is assumed to be a new playlist, so no Replace required
+            await AVTransport.SaveQueue(0, name, string.Empty).Required();
+        }
+
+        public async Task SaveQueueReplacePlaylistAsync(UPnPMusicItem item)
+        {
+            // Must remove the old version first
+            await ContentDirectory.DestroyObject(item.Id).Required();
+            await AVTransport.SaveQueue(0, item.Title, string.Empty).Required();
         }
 
         #region Play music item functions
@@ -341,13 +428,43 @@ namespace OpenPhonos.Sonos
                 await AVTransport.RemoveAllTracksFromQueue(0).Optional();
             }
 
-            // Failure or not we add then play
-            await AVTransport.AddURIToQueue(0, item.Res, item.Metadata, whereToAdd, queueAsNext).Required();
+            var (res, md) = await GetResAndMdAsync(item);
+
+            await AVTransport.AddURIToQueue(0, res, md, whereToAdd, queueAsNext).Required();
 
             if (seekThenPlay)
             {
                 await PlayFromQueueAsync(whereToAdd, shuffle);
             }
+        }
+
+        private async Task<(string res, string md)> GetResAndMdAsync(MusicItem item)
+        {
+            string res = item.Res;
+            string md = item.Metadata;
+
+            // Go get some fresh md if UPnP (unless a Favorite)
+            if (item is UPnPMusicItem upnp && upnp.ParentId != "FV:2")
+            {
+                if (upnp.Id != "spdif-input")
+                {
+                    var freshmd = await ContentDirectory.Browse(upnp.Id, "BrowseMetadata", "*", 0, 1, "");
+                    if (freshmd.Error == null)
+                    {
+                        md = freshmd.Result;
+                    }
+                }
+                else
+                {
+                    res = DidlData.MakeTV(this).Res;
+                }
+            }
+            else if (md != null)
+            {
+                md = md.Replace("\r\n", string.Empty);
+            }
+
+            return (res, md);
         }
 
         private async Task PlayFromQueueAsync(uint tracknum, bool shuffle)
@@ -459,6 +576,12 @@ namespace OpenPhonos.Sonos
             play.ThrowIfFailed();
         }
 
+        public async Task Skip(int delta)
+        {
+            var diff = TimeSpan.FromSeconds(delta).ToString();
+            await AVTransport.Seek(0, "TIME_DELTA", diff).Required();
+        }
+
         public event PropertyChangedEventHandler PropertyChanged;
 
         private async Task DeviceSubscriptionHandler(Service sender, EventSubscriptionArgs args)
@@ -528,6 +651,29 @@ namespace OpenPhonos.Sonos
                 const string NS = "urn:schemas-upnp-org:metadata-1-0/RCS/";
                 var xml = XElement.Parse(last);
 
+                var v = xml.Descendants(XName.Get("Volume", NS));
+
+                var lf = v.FirstOrDefault(ch => (string)ch.Attribute(XName.Get("channel")) == "LF");
+                if (lf != null)
+                {
+                    var lfv = (string)(lf.Attribute(XName.Get("val")));
+                    var rf = v.FirstOrDefault(ch => (string)ch.Attribute(XName.Get("channel")) == "RF");
+                    if (rf != null)
+                    {
+                        // This assumes LF and RF are always sent together
+                        var rfv = (string)(rf.Attribute(XName.Get("val")));
+                        if (ushort.TryParse(lfv, out var left) && ushort.TryParse(rfv, out var right))
+                        {
+                            var newBalance = CalculateBalance(left, right);
+                            if (newBalance != this.Balance)
+                            {
+                                this.Balance = newBalance;
+                                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Balance)));
+                            }
+                        }
+                    }
+                }
+
                 var volumes = from volume in xml.Descendants(XName.Get("Volume", NS))
                               where volume.Attribute(XName.Get("channel")).Value == "Master"
                               select volume.Attribute(XName.Get("val")).Value;
@@ -556,18 +702,77 @@ namespace OpenPhonos.Sonos
                     this.FixedVolume = fixd == "1";
                     PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("FixedVolume"));
                 }
+
+                var bass = (string)xml.Descendants(XName.Get("Bass", NS)).FirstOrDefault()?.Attribute("val");
+                if (short.TryParse(bass, out short b) && b != this.Bass)
+                {
+                    this.Bass = b;
+                    PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Bass)));
+                }
+
+                var treble = (string)xml.Descendants(XName.Get("Treble", NS)).FirstOrDefault()?.Attribute("val");
+                if (short.TryParse(treble, out short t) && t != this.Treble)
+                {
+                    this.Treble = t;
+                    PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Treble)));
+                }
+
+                var loudness = xml.Descendants(XName.Get("Loudness", NS)).FirstOrDefault();
+                if (((string)loudness?.Attribute(XName.Get("channel")) == "Master"))
+                {
+                    string l = (string)loudness.Attribute(XName.Get("val"));
+                    if (short.TryParse(l, out short loud) && loud != this.Loudness)
+                    {
+                        this.Loudness = loud;
+                        PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Loudness)));
+                    }
+                }
+
+                var night = (string)xml.Descendants(XName.Get("NightMode", NS)).FirstOrDefault()?.Attribute("val");
+                if (night != null)
+                {
+                    bool n = night == "1";
+                    if (n != this.NightMode)
+                    {
+                        this.NightMode = n;
+                        PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(NightMode)));
+                    }
+                }
+
+                var dialog = (string)xml.Descendants(XName.Get("DialogLevel", NS)).FirstOrDefault()?.Attribute("val");
+                if (dialog != null)
+                {
+                    if (short.TryParse(dialog, out short d) && d != this.DialogLevel)
+                    {
+                        this.DialogLevel = d;
+                        PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(DialogLevel)));
+                    }
+                }
             }
 
             await Task.FromResult(true);
         }
 
-        public class QueueChangedEventArgs : EventArgs
+        // LF is 100 if Balance<=0, else =Balance
+        // RF is 100 if Balance>=0, else =-Balance
+        internal static short CalculateBalance(ushort lf, ushort rf)
         {
+            return (short)((lf < 100) ? 100 - lf : (short)rf - 100);
+        }
+
+
+        public class ContentChangedEventArgs : EventArgs
+        {
+            public string What;
+            public string IDs;
             public uint UpdateId;
         }
 
-        public delegate void QueueChangedEventHandler(object sender, QueueChangedEventArgs e);
+        public delegate void QueueChangedEventHandler(object sender, ContentChangedEventArgs e);
         public event QueueChangedEventHandler QueueChangedEvent;
+
+        public delegate void ContentChangedEventHandler(object sender, ContentChangedEventArgs e);
+        public event ContentChangedEventHandler ContentChangedEvent;
 
         private Task ContentDirectoryCallback(Service sender, EventSubscriptionArgs args)
         {
@@ -578,13 +783,17 @@ namespace OpenPhonos.Sonos
 
             if (args.Items.TryGetValue("ContainerUpdateIDs", out string ids))
             {
+                var values = ids.Split(',');
+                if (values.Length < 2)
+                    return Task.CompletedTask;
+
+                var update = uint.Parse(values[1]);
+
                 // this can be a list such as: R:0,21,FV:2,21,FV:3,21
                 if (ids.StartsWith("Q:0,"))
                 {
                     // Queue contents have changed
-                    var values = ids.Split(',');
-                    var update = uint.Parse(values[1]);
-                    QueueChangedEvent.Invoke(this, new QueueChangedEventArgs()
+                    QueueChangedEvent.Invoke(this, new ContentChangedEventArgs()
                     {
                         UpdateId = update
                     }
@@ -592,7 +801,36 @@ namespace OpenPhonos.Sonos
                 }
                 else if (ids.StartsWith("SQ:"))
                 {
-                    // TODO handle Playlist updates
+                    // eg "SQ:,25"
+                    // The list of playlists changed (or the contents of a playlist)
+                    ContentChangedEvent.Invoke(this, new ContentChangedEventArgs()
+                    {
+                        What = values[0],
+                        IDs = ids,
+                        UpdateId = update
+                    });
+                }
+                else if (ids.StartsWith("FV:2"))
+                {
+                    // List of Favorites changed eg "FV2:,100" (or a Favorite)
+                    ContentChangedEvent.Invoke(this, new ContentChangedEventArgs()
+                    {
+                        What = values[0],
+                        IDs = ids,
+                        UpdateId = update
+                    });
+
+                }
+                else if (ids.StartsWith("R:0"))
+                {
+                    // List of Radio Stations changed
+                    ContentChangedEvent.Invoke(this, new ContentChangedEventArgs()
+                    {
+                        What = values[0],
+                        IDs = ids,
+                        UpdateId = update
+                    });
+
                 }
             }
 
@@ -636,6 +874,9 @@ namespace OpenPhonos.Sonos
                 }
             }
         }
+
+        public string EthLink { get; private set; }
+        public string ChannelFreq { get; private set; }
 
         private Player(Device device, string displayName, string uniqueName, bool invisible) : this(device)
         {
@@ -718,6 +959,7 @@ namespace OpenPhonos.Sonos
             this.SerialNumber = device.Attribute("serialNum");
             this.SoftwareVersion = device.Attribute("softwareVersion");
             this.HardwareVersion = device.Attribute("hardwareVersion");
+            this.DisplayVersion = device.Attribute("displayVersion");
             this.SeriesID = device.Attribute("seriesid");
             this.DisplayName = device.Attribute("displayName");
             this.IPAddress = device.BaseUri.GetComponents(UriComponents.Host, UriFormat.Unescaped);
@@ -748,6 +990,8 @@ namespace OpenPhonos.Sonos
                     this.Invisible = string.IsNullOrEmpty(zoneinfo.CurrentZoneGroupID);
                 }
 
+                RoomNameWithSuffix = RoomName;          // default
+
                 if (this.Invisible)
                 {
                     // If this Player is invisible, could be a Satellite device so lets find out (could also be a Boost)
@@ -759,6 +1003,26 @@ namespace OpenPhonos.Sonos
                     if (me != null)
                     {
                         CalculateSurroundName((string)me.Attribute("HTSatChanMapSet"));
+                        ParentId = (string)me.Parent.Attribute("UUID");
+                    }
+                    else
+                    {
+                        // For stereo pairs
+                        me = topo.Descendants(XName.Get("ZoneGroupMember")).FirstOrDefault(s => (string)s.Attribute("UUID") == this.UniqueName);
+                        if (me != null)
+                        {
+                            ParentId = (string)me.Parent.Attribute("Coordinator");
+                            if (ParentId == UniqueName)
+                            {
+                                // A BOOST is in a group of 1
+                                ParentId = null;
+                            }
+                            if (ParentId != null)
+                            {
+                                // Coordinator is always Left, so invisible one must be R
+                                RoomNameWithSuffix = RoomName + " (R)";
+                            }
+                        }
                     }
                 }
             }
@@ -771,8 +1035,9 @@ namespace OpenPhonos.Sonos
         public string FriendlyModelName()
         {
             string[] gen1 = { "S5", "S13" };
-            string[] gen2 = { "S6", "S15", "S18" };
-            string[] gen3 = { "S26" };
+            string[] gen2 = { "S6", "S15", "S18", "S31", "S38", "S54", "S57" };
+            string[] gen3 = { "S26", "S43" };
+            string[] gen4 = { "S55" };
 
             string model = this.ModelNumber;
             int suffix = 0;
@@ -783,6 +1048,8 @@ namespace OpenPhonos.Sonos
                 suffix = 2;
             else if (gen3.Contains(model))
                 suffix = 3;
+            else if (gen4.Contains(model))
+                suffix = 4;
             else if (model == "Sub")
             {
                 if (this.Memory == "64")
@@ -857,24 +1124,33 @@ namespace OpenPhonos.Sonos
             if (string.IsNullOrEmpty(htmap))
                 return;
 
-            string toFind = this.UniqueName + ":";
-            int me = htmap.IndexOf(toFind);
-            if (me < 0)
+            var items = htmap.Split(';');
+            var mine = items.FirstOrDefault(i => i.StartsWith(this.UniqueName));
+            if (mine == null)
                 return;
 
-            string what = htmap.Substring(me + toFind.Length, 2);
+            string what = mine.Substring(this.UniqueName.Length + 1);
+            string suffix;
+
             switch (what)
             {
                 case "LR":
-                    RoomName += " (LS)";
+                    suffix = "LS";
                     break;
                 case "RR":
-                    RoomName += " (RS)";
+                    suffix = "RS";
                     break;
                 case "SW":
-                    RoomName += " (Sub)";
+                    suffix = "Sub";
                     break;
+                case "LR,RR":
+                    suffix = "LS+RS";
+                    break;
+                default:
+                    return;
             }
+
+            RoomNameWithSuffix = $"{RoomName} ({suffix})";
         }
 
         public static string ConvertDigitalFormat(uint fmt)
@@ -1057,6 +1333,136 @@ namespace OpenPhonos.Sonos
         {
             var player = new Player(info.Location, info.Name + " MISSING", info.Uuid, true);
             return player;
+        }
+
+        public async Task<IEnumerable<UPnPMusicItem>> GetPlaylistsAsync()
+        {
+            var all = await ContentDirectory.Browse("SQ:", "BrowseDirectChildren", "*", 0, 0, "");
+            return UPnPMusicItem.Parse(all.Result, ContentDirectory.BaseUri);
+        }
+
+        public async Task<uint> AddToPlaylistAsync(string playlistId, uint updateId, MusicItem item)
+        {
+            uint where = unchecked((uint)-1);
+            var (res, md) = await GetResAndMdAsync(item);
+
+            var state = await ContentDirectory.Browse(playlistId, "BrowseMetadata", string.Empty, 0, 1, string.Empty).Required();
+            var added = await AVTransport.AddURIToSavedQueue(0, playlistId, state.UpdateID, res, md, where);
+            added.ThrowIfFailed();
+            return added.NewUpdateID;
+        }
+
+        public async Task AddToFavoritesAsync(MusicItem item)
+        {
+            string md = item.Metadata;
+            string subtitle = item.Subtitle;
+            string art = item.ArtUri;
+            if (art != null && art.StartsWith("ms-appx://"))
+            {
+                art = null;
+            }
+            string protocolInfo = null;
+
+            if (string.IsNullOrEmpty(md) && item is UPnPMusicItem upnp)
+            {
+                // We have no metadata (i.e. real UPnP source), so go get some
+                var freshmd = await ContentDirectory.Browse(upnp.Id, "BrowseMetadata", "*", 0, 1, "").Required();
+                md = freshmd != null ? freshmd.Result : string.Empty;
+            }
+
+            if (item is MusicServiceItem svcItem)
+            {
+                // Make a Fave from a Music Service item
+                protocolInfo = svcItem.Provider.GetProtocolInfo(item);                // Necessary so that Tracks from Services are playable
+                if (subtitle == null)
+                {
+                    subtitle = svcItem.Provider.DisplayName;
+                }
+                // Get rid of the art from the md as it can be enormous and cause the resMD to be >1024 which will get truncated by CreateObject
+                md = DidlData.RemoveElement(md, "upnp:albumArtURI");
+            }
+            else
+            {
+                // UPnP Source
+                var originalMD = new SimpleDidl(XElement.Parse(md), false);
+                art = originalMD.albumArtURI;
+                if (string.IsNullOrEmpty(subtitle))
+                {
+                    subtitle = DidlData.ClassToName(originalMD.uclass);
+                }
+                protocolInfo = originalMD.protocolInfo;
+
+                if (item.IsContainer)
+                {
+                    // The metadata we have for this is a Container, but we need to manually build an Item instead
+                    md = DidlData.CreateItem(originalMD.id, originalMD.parent, item.Title, originalMD.uclass);
+                }
+            }
+
+            // Make sure the md isn't going to be corrupted by CreateObject
+            Debug.Assert(md.Length < 1024);
+
+            var didl = DidlData.CreateFavorite(item.Title, subtitle, art, item.Res, protocolInfo, md);
+            var create = await ContentDirectory.CreateObject("FV:2", didl).Required();
+        }
+
+        public async Task RemoveQueueItemAsync(QueueMusicItem item, uint updateId)
+        {
+            await AVTransport.RemoveTrackFromQueue(0, item.Id, updateId).Required();
+        }
+
+        public async Task RemoveItemAsync(UPnPMusicItem item)
+        {
+            // This is based on IsDeletable, which is true for:
+            // Favorites, Playlists, and Tracks in Playlists
+
+            if (item.ParentId == "FV:2" || item.ParentId == "R:0/0")
+            {
+                // Delete a Favorite or Radio Station
+                await ContentDirectory.DestroyObject(item.Id).Required();
+                return;
+            }
+
+            if (!item.ParentId.StartsWith("SQ:"))
+                throw new NotImplementedException("Cannot delete from " + item.ParentId);
+
+            if (item.ParentId == "SQ:")
+            {
+                // Delete a Playlist
+                await ContentDirectory.DestroyObject(item.Id).Required();
+                return;
+            }
+
+            const uint chunksize = 50;
+            uint start = 0;
+            SonosServices.ContentDirectory1.Browse_Result browse = null;
+            bool found = false;
+
+            // Need to determine the index of the item in the playlist so have to enum it!
+            while (!found)
+            {
+                browse = await ContentDirectory.Browse(item.ParentId, "BrowseDirectChildren", string.Empty, start, chunksize, string.Empty).Required();
+                var items = UPnPMusicItem.Parse(browse.Result, ContentDirectory.BaseUri);
+                foreach(var track in items)
+                {
+                    if (track.Id == item.Id)
+                    {
+                        found = true;
+                        break;
+                    }
+                    start++;
+                }
+                if (browse.TotalMatches == start)
+                {
+                    throw new Exception("Cannot find track in playlist");
+                }
+            };
+
+            // This is a truly weird API, see the details at https://github.com/SoCo/SoCo/blob/master/soco/core.py#L2628
+            string tracklist = start.ToString();
+            string newpos = string.Empty;
+            var moved = await AVTransport.ReorderTracksInSavedQueue(0, item.ParentId, browse.UpdateID, tracklist, newpos);
+            moved.ThrowIfFailed();
         }
 
         // Every Sonos device has these four:

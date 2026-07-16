@@ -77,6 +77,8 @@ namespace OpenPhonos.Sonos
 
         public string Nickname { get; }                        // can be null or empty
 
+        public int ServiceId { get => Description.ServiceId; }
+
         public string Tier { get; private set; }
         public Dictionary<string, string> QualityBadges { get; private set; }
         public Dictionary<string, DisplayData> DisplayModesById { get; private set; }
@@ -124,6 +126,8 @@ namespace OpenPhonos.Sonos
             {
                 this.GoogleApi = true;
                 this.NeedFreshToken = true;
+                this.GoogleApiKey = "AIzaSyDjoFM9yZcFCNRzEGeHF1FvudlHrna1dvg";
+                this.SonosApiKey = "8525505d-78e5-4dab-943f-bafe95b6074d";
             }
 
             this.QualityBadges = new Dictionary<string, string>();
@@ -273,6 +277,8 @@ namespace OpenPhonos.Sonos
 
             int.TryParse((string)result.Descendants(XName.Get("total", ServiceNamespace)).FirstOrDefault(), out max);      // as Murfie returns "undefined" for total
 
+            var baseUri = new Uri(Description.Uri);
+
             foreach (var item in result.Descendants())
             {
                 SMAPIItem music = null;
@@ -291,7 +297,7 @@ namespace OpenPhonos.Sonos
                         itemtype = (string)item.Element(XName.Get("itemType", ServiceNamespace)),
                         displayType = ExtractDisplayType(item),
                         canPlay = playable,
-                        canFavorite = BoolParse((string)item.Element(XName.Get("canAddToFavorites", ServiceNamespace)), true),
+                        canFavorite = !BoolParse((string)item.Element(XName.Get("isEphemeral", ServiceNamespace)), false),
                         subtitle = (string)item.Element(XName.Get("artist", ServiceNamespace)),
                         canEnumerate = enumerable,
                         art = (string)item.Element(XName.Get("albumArtURI", ServiceNamespace)),
@@ -311,7 +317,7 @@ namespace OpenPhonos.Sonos
                         itemtype = (string)item.Element(XName.Get("itemType", ServiceNamespace)),
                         trackNumber = (string)trackMd.Elements(XName.Get("trackNumber", ServiceNamespace)).FirstOrDefault(),
                         canPlay = BoolParse((string)trackMd.Elements(XName.Get("canPlay", ServiceNamespace)).FirstOrDefault(), true),
-                        canFavorite = BoolParse((string)trackMd.Elements(XName.Get("canAddToFavorites", ServiceNamespace)).FirstOrDefault(), true),
+                        canFavorite = !BoolParse((string)trackMd.Elements(XName.Get("isEphemeral", ServiceNamespace)).FirstOrDefault(), false),
                         subtitle = ExtractSubtitle(item),
                         art = ExtractArt(item),
                         canEnumerate = false,
@@ -341,6 +347,12 @@ namespace OpenPhonos.Sonos
                     // If its https artwork, it will take ages to return an error, so force the url to be "bad" so it fails quickly
                     if (music.art.StartsWith("https://cloudplayer.ws.sonos.com/VirtualAssets"))
                         music.art = "x-sonos-auth-" + music.art;
+                    else if (Uri.IsWellFormedUriString(music.art, UriKind.Relative))
+                    {
+                        var fulluri = new Uri(baseUri, music.art);
+                        music.art = fulluri.AbsoluteUri;      // relative art eg SoundCloud
+                    }
+                        
                     md.AlbumArtURI = music.art;
                 }
                 else
@@ -490,6 +502,7 @@ namespace OpenPhonos.Sonos
                     break;
                 case "albumList":
                     what = 0xD;
+                    uclass = "object.container.playlistContainer";
                     break;
                 case "trackList":
                     what = 0xE;
@@ -498,8 +511,11 @@ namespace OpenPhonos.Sonos
                 case "artistTrackList":
                     what = 0xF;
                     break;
-                case "search":          // TODO better
                 case "container":
+                    uclass = "object.container";
+                    what = 8;
+                    break;
+                case "search":          // TODO better
                 case "collection":      // TODO figure out real value (MOG)
                 case null:              // TODO figure out real value (Songza root)
                     what = 8;
@@ -599,11 +615,24 @@ namespace OpenPhonos.Sonos
                             parentId = "00050064";        // made this up!
                             break;
 
-                        case "audio/vnd.radiotime":             // NPR Hours News (Recent Episodes) [not in the spec]
-                            uclass = "object.item.audioItem.musicTrack.recentShow";
-                            res = "x-sonosapi-rtrecent:" + id + "?sid=" + Description.XmlId.ToString() + "&flags=8224" + addserial;
-                            me = "F00032020";
-                            parentId = "F00082064";
+                        case "audio/vnd.radiotime":
+                            // NPR Hours News (Recent Episodes) [not in the spec]
+                            bool tuneinclassic = Description.XmlId == 254;
+                            if (tuneinclassic)
+                            {
+                                uclass = "object.item.audioItem.musicTrack.recentShow";
+                                res = "x-sonosapi-rtrecent:" + id + "?sid=" + Description.XmlId.ToString() + "&flags=8224" + addserial;
+                                me = "F00032020";
+                                parentId = "F00082064";
+                            }
+                            else
+                            {
+                                // New TuneIn
+                                uclass = "object.item.audioItem.podcast";
+                                res = "x-sonosapi-rtrecent:" + id + "?sid=" + Description.XmlId.ToString() + "&flags=24616" + addserial;
+                                me = "10156028";
+                                parentId = "10142064";
+                            }
                             break;
 
                         // no known users but treat it like the others, Just In Case it works anyway!
@@ -734,10 +763,10 @@ namespace OpenPhonos.Sonos
                 playable = false;
                 item.title = item.title + "(??)";
             }
-            else if (playable)
+            else if (playable || enumerable)
             {
                 data.Class = uclass;
-                data.Res = res;
+                data.Res = playable ? res : string.Empty;
                 data.Metadata = StandardMetadata(id, parent, item.title, data.Class, me, parentId, art);
                 data.IsPlayable = playable;
                 data.IsQueueable = queueable;
@@ -1098,9 +1127,18 @@ xmlns=""urn:schemas-upnp-org:metadata-1-0/DIDL-Lite/"">
             return defaultResult;
         }
 
+        // This is important when adding Favorites
         public string GetProtocolInfo(MusicItem item)
         {
-            throw new NotImplementedException();
+            if (item.IsContainer)
+            {
+                return "x-rincon-cpcontainer:*:*:*";
+            }
+            else
+            {
+                // The middle bit should be something like "audio/mpeg3" but we don't have the data so we use "*"
+                return "sonos.com-http:*:*:*";
+            }
         }
 
         private MusicServiceResult CachedSearchCategories;
@@ -1484,14 +1522,16 @@ xmlns=""urn:schemas-upnp-org:metadata-1-0/DIDL-Lite/"">
                         {
                             var x = itemArray.ElementAt(i);
                             var content = x.GetProperty("content");
-                            string uri;
+                            string uri = null;
                             if (content.TryGetProperty("container", out var container) || content.TryGetProperty("track", out container))
                             {
-                                uri = container.GetProperty("imageUrl").GetString();
+                                if (container.TryGetProperty("imageUrl", out var img))
+                                    uri = img.GetString();
                             }
                             else
                             {
-                                uri = content.GetProperty("imageUrl").GetString();
+                                if (content.TryGetProperty("imageUrl", out var img))
+                                    uri = img.GetString();
                             }
                             uris.Add(uri);
                         }

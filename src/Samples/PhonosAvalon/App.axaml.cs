@@ -1,25 +1,29 @@
 ﻿using Avalonia;
+using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Data.Core.Plugins;
 using Avalonia.Markup.Xaml;
-
+using Avalonia.Media;
+using Avalonia.Styling;
+using Microsoft.Extensions.Logging;
+using OpenPhonos.UPnP;
 using PhonosAvalon.ViewModels;
 using PhonosAvalon.Views;
-using System.Threading.Tasks;
-
-using Microsoft.Extensions.Logging;
-using System.Diagnostics;
-using OpenPhonos.UPnP;
-using System.Collections.Generic;
 using System;
+using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
-using System.Runtime.InteropServices;
 using System.Reflection;
+using System.Runtime.InteropServices;
+using System.Threading.Tasks;
 
 namespace PhonosAvalon;
 
 public partial class App : Application
 {
+    // TODO eventually choose by Platform
+    public bool IsMaterialTheme => false;
+
     public override void Initialize()
     {
         AvaloniaXamlLoader.Load(this);
@@ -36,6 +40,8 @@ public partial class App : Application
         // Line below is needed to remove Avalonia data validation.
         // Without this line you will get duplicate validations from both Avalonia and CT
         BindingPlugins.DataValidators.RemoveAt(0);
+
+        UpdateTheme();
 
         InitializeLogging();
 
@@ -60,13 +66,52 @@ public partial class App : Application
         }
         else if (ApplicationLifetime is ISingleViewApplicationLifetime singleViewPlatform)
         {
-            singleViewPlatform.MainView = new MobileMainView
+            if (App.UseLargeLayout)
             {
-                DataContext = new MainViewModel()
-            };
+                singleViewPlatform.MainView = new AdaptableView
+                {
+                    DataContext = new MainViewModel()
+                };
+            }
+            else
+            {
+                singleViewPlatform.MainView = new AdaptableView
+                {
+                    DataContext = new MainViewModel()
+                };
+            }
         }
 
         base.OnFrameworkInitializationCompleted();
+    }
+
+    public void UpdateTheme()
+    {
+        switch (Settings.Instance.Theme)
+        {
+            case 0:
+                Application.Current!.RequestedThemeVariant = ThemeVariant.Default;
+                break;
+            case 1:
+                Application.Current!.RequestedThemeVariant = ThemeVariant.Dark;
+                break;
+            case 2:
+                Application.Current!.RequestedThemeVariant = ThemeVariant.Light;
+                break;
+        }
+
+        // Updated DynamicResources if Material
+        if (IsMaterialTheme)
+        {
+            this.Resources["CustomButtonBackground"] = this.Resources["MaterialButtonBackground"];
+        }
+    }
+
+    public void UpdateLargeIcons(bool large)
+    {
+        this.Resources["IconButtonSize"] = (double)(large ? 48 : 42);
+        this.Resources["IconButtonRadius"] = new CornerRadius(large ? 48 : 42);
+        this.Resources["IconButtonGrid"] = new GridLength(large ? 52 : 48);
     }
 
     public static ILoggerFactory? AppLoggerFactory { get; private set; }
@@ -81,6 +126,16 @@ public partial class App : Application
     /// This is the version that is displayed to the user. Can be null.
     /// </summary>
     public static string OSDisplayVersion { get; set; }
+
+    /// <summary>
+    /// Use to force large layout on non-Desktop devices
+    /// </summary>
+    public static bool UseLargeLayout { get; set; }
+
+    /// <summary>
+    /// Used for telemetry, unique-ish per session
+    /// </summary>
+    public static string SessionId { get; set; }
 
     /// <summary>
     /// Implement this if you want to use ApplicationInsights
@@ -148,10 +203,12 @@ public partial class App : Application
         }
 
         var ver = App.DisplayVersion ?? Assembly.GetExecutingAssembly().GetName().Version.ToString();
+        App.SessionId = Guid.NewGuid().ToString().Substring(0, 8);
 
         var scope = new Dictionary<string, object> {
             { "OS", os },
             { "Version", ver },
+            { "SessionId", App.SessionId },
 #if DEBUG
             { "Debug", true },
 #endif
@@ -201,12 +258,11 @@ public partial class App : Application
     {
         if (ApplicationLifetime is ISingleViewApplicationLifetime singleViewPlatform)
         {
-            if (singleViewPlatform.MainView is MobileMainView vm)
+            if (singleViewPlatform.MainView is AdaptableView vm)
             {
                 vm.ConfigureTimer(enable);
             }
         }
-
     }
 
     private bool ShutdownRetry;
@@ -259,4 +315,18 @@ public interface IActivatableLifetimeX
     //     An event that is raised when the application is Deactivated for various reasons
     //     as described by the Avalonia.Controls.ApplicationLifetimes.ActivationKind enumeration.
     event EventHandler<ActivatedEventArgs>? Deactivated;
+}
+
+public class OnThemeTypeExtension : MarkupExtension
+{
+    public object? Material { get; set; } = null;
+    public object? Default { get; set; } = null;
+
+    public override object ProvideValue(IServiceProvider serviceProvider)
+    {
+        var result = (App.Current as App).IsMaterialTheme ? Material : Default;
+        if (result == null)
+            throw new ArgumentNullException("OnThemeType");
+        return result;
+    }
 }
