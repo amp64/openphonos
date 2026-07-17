@@ -93,8 +93,7 @@ namespace OpenPhonos.Sonos
 
         private bool NeedFreshToken;
         private bool GoogleApi;
-        private string GoogleApiKey;
-        private string SonosApiKey;
+        public static string [] YtmKeys;
 
         private const string ServiceNamespace = "http://www.sonos.com/Services/1.1";
         //public const int GulpSize = 25;              // we can't read more than this (Google limits results to 1000, XBM 25-30)
@@ -126,8 +125,6 @@ namespace OpenPhonos.Sonos
             {
                 this.GoogleApi = true;
                 this.NeedFreshToken = true;
-                this.GoogleApiKey = "AIzaSyDjoFM9yZcFCNRzEGeHF1FvudlHrna1dvg";
-                this.SonosApiKey = "8525505d-78e5-4dab-943f-bafe95b6074d";
             }
 
             this.QualityBadges = new Dictionary<string, string>();
@@ -1606,10 +1603,10 @@ xmlns=""urn:schemas-upnp-org:metadata-1-0/DIDL-Lite/"">
 
             var xml = await SOAPRequestAsync(uri, headers, soap, action, ServiceNamespace, lang, userAgent, RawName, (client) =>
             {
-                if (GoogleApi && GoogleApiKey != null && SonosApiKey != null)
+                if (GoogleApi && YtmKeys?.Length > 1)
                 {
-                    client.DefaultRequestHeaders.Add("X-Goog-Api-Key", GoogleApiKey);
-                    client.DefaultRequestHeaders.Add("X-Sonos-Api-Key", SonosApiKey);
+                    client.DefaultRequestHeaders.Add("X-Goog-Api-Key", YtmKeys[0]);
+                    client.DefaultRequestHeaders.Add("X-Sonos-Api-Key", YtmKeys[1]);
                     if (!NeedFreshToken)
                     {
                         client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", Token);
