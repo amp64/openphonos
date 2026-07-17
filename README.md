@@ -4,7 +4,7 @@ OpenPhonos is full featured Sonos stack and application, in C#, that runs on alm
 This codebase has been around in various forms for well over a decade, starting on Windows Phone 7, then 7.5, then 8, then Windows 8, then UWP, then iOS and most recently run on TvOs, Android and MacOS.
 Everything is written in C#, and the sample app uses the Avalonia framework to run on pretty much anything.
 
-It is compatible with all S1 and S2 devices, running firmware all the way back to the 8.4 release.
+It is compatible with all S1 and S2 devices, compatible with Sonos firmware all the way back to the 8.4 release.
 
 This code uses the UPnP APIs in the speakers, and SMAPI to talk to music services. The newer [Sonos cloud api](https://docs.sonos.com/docs/control-sonos-players) has no support in this project at this time.
 
